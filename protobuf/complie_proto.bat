@@ -1,0 +1,1 @@
+%GOPATH%\bin\protoc --go_out=. *.proto

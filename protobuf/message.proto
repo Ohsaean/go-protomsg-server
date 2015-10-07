@@ -1,0 +1,99 @@
+package gs_protocol;
+
+enum Type {
+	Undefined = 0;
+	Login = 1;
+	Create = 2;
+	Join = 3;
+	DefinedAction1 = 4;
+	Quit = 5;
+	RoomList = 6;
+
+	NotifyJoin = 100;
+	NotifyAction1 = 101;
+	NotifyQuit = 102;
+
+	Error = 1000;
+}
+
+enum ErrorType {
+	Unknown = 1;
+}
+
+message ReqLogin {
+	required int64 userID = 1;
+}
+
+message ResLogin {
+	required int64 userID = 1;
+	optional int32 result = 2;
+}
+
+message ReqCreate {
+	required int64 userID = 1;
+}
+
+message ResCreate {
+	required int64 userID = 1;
+	required int64 roomID = 2;
+}
+
+message ReqJoin {
+	required int64 userID = 1;
+	required int64 roomID = 2;
+}
+
+message ResJoin {
+	required int64 userID = 1;
+	required int64 roomID = 2;
+	repeated int64 members = 3;
+}
+
+message ReqAction1 {
+	required int64 userID = 1;
+}
+
+message ResAction1 {
+	required int64 userID = 1;
+	optional int32 result = 2;
+}
+
+message ReqQuit {
+	required int64 userID = 1;
+}
+
+message ResQuit {
+	required int32 isSuccess = 1;
+}
+
+message ReqRoomList {
+	required int64 userID = 1;
+}
+
+message ResRoomList {
+	repeated int64 roomIDs = 1;
+}
+
+
+
+// notify message type (for client)
+message NotifyJoinMsg {
+	required int64 userID = 1; // joined user
+	required int64 roomID = 2;
+}
+
+message NotifyAction1Msg {
+	required int64 userID = 1; // action user
+}
+
+
+message NotifyQuitMsg {
+	required int64 userID = 1; // quited user
+	required int64 roomID = 2;
+}
+
+
+message ErrorMsg {
+	required int32 errCode = 1; // pre-defined error code
+	required string errMessage = 2; // custom error message
+}
