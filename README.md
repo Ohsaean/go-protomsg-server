@@ -1,3 +1,3 @@
 # go-protomsg-server
 
-google protocol-buffer demo
+google protocol-buffer with golang demo
