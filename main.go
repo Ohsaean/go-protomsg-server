@@ -1,8 +1,8 @@
 package main
 
 import (
-	gs "goserver/lib"
-	"goserver/protobuf"
+	gs "go-protomsg-server/lib"
+	"go-protomsg-server/protobuf"
 	"math"
 	"math/rand"
 	"net"

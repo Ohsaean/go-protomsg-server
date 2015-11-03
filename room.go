@@ -1,7 +1,7 @@
 package main
 
 import (
-	gs "goserver/lib"
+	gs "go-protomsg-server/lib"
 	"math"
 )
 

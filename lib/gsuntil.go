@@ -6,7 +6,7 @@ import (
 	"os"
 	"encoding/binary"
 	"math/rand"
-	"goserver/protobuf"
+	"go-protomsg-server/protobuf"
 )
 
 func Itoa64(i int64) string {

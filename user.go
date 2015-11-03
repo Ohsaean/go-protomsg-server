@@ -2,8 +2,8 @@ package main
 
 import (
 	"github.com/golang/protobuf/proto"
-	"goserver/lib"
-	"goserver/protobuf"
+	"go-protomsg-server/lib"
+	"go-protomsg-server/protobuf"
 )
 
 type User struct {
