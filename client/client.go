@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	gs "goserver/lib"
-	"goserver/protobuf"
+	gs "go-protomsg-server/lib"
+	"go-protomsg-server/protobuf"
 	"net"
 )
 
@@ -88,7 +88,7 @@ func main() {
 		for {
 			n, err := client.Read(data) // conn 에서 한줄 빼와본다
 			if err != nil {
-				gs.Log("stream read error : ", err)
+				gs.Log("Fail Stream read, err : ", err)
 				break
 			}
 
@@ -105,7 +105,7 @@ func main() {
 			if ok {
 				handler(rawData) // 핸들러 호출
 			} else {
-				gs.Log("No function defined for type", handler)
+				gs.Log("Fail no function defined for type", handler)
 				break
 			}
 		}

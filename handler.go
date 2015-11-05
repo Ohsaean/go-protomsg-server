@@ -38,31 +38,31 @@ func LoginHandler(user *User, data []byte) {
 }
 
 func CreateHandler(user *User, data []byte) {
-	gs.Log("room create handler start")
+
 	// request body unmarshaling
 	req := new(gs_protocol.ReqCreate)
 	err := proto.Unmarshal(data, req)
 	gs.CheckError(err)
 
 	if user.userID != req.GetUserID() {
-		gs.Log("fail room create, error user_id")
+		gs.Log("Fail room create, user id missmatch")
 		return
 	}
 
 	// room create
-	roomID := GetRandomRoomID() // 그냥 random 숫자임
+	roomID := GetRandomRoomID()
 	r := NewRoom(roomID)
-	r.users.Set(user.userID, user) // 룸의 유저리스트에 유저 추가
-	user.room = r     // 유저 객체에 방 할당
-	rooms.Set(roomID, r) // 룸 맵에 등록
-	gs.Log("get rand room id : ", gs.Itoa64(roomID))
+	r.users.Set(user.userID, user) // insert user
+	user.room = r     // set room
+	rooms.Set(roomID, r) // set room into global shared map
+	gs.Log("Get rand room id : ", gs.Itoa64(roomID))
 
 	// response body marshaling
 	res := new(gs_protocol.ResCreate)
 	res.RoomID = proto.Int64(roomID)
 	res.UserID = proto.Int64(user.userID)
 
-	gs.Log("room create success, room id : ", gs.Itoa64(roomID))
+	gs.Log("Room create, room id : ", gs.Itoa64(roomID))
 
 	msg, err := proto.Marshal(res)
 	gs.CheckError(err)
@@ -81,7 +81,7 @@ func JoinHandler(user *User, data []byte) {
 	value, ok := rooms.Get(roomID)
 
 	if !ok {
-		gs.Log("room join fail, does not exist, room id : ", gs.Itoa64(roomID))
+		gs.Log("Fail room join, room does not exist, room id : ", gs.Itoa64(roomID))
 		return
 	}
 
@@ -89,14 +89,13 @@ func JoinHandler(user *User, data []byte) {
 	r.users.Set(user.userID, user) // 유저 객체 map 에 삽입
 	user.room = r               // 유저객체에도 룸 객체 등록
 
-	// 통지(브로드캐스트) 메시지
+	// broadcast message
 	notifyMsg := new(gs_protocol.NotifyJoinMsg)
 	notifyMsg.UserID = proto.Int64(user.userID)
 	notifyMsg.RoomID = proto.Int64(roomID)
 	msg, err := proto.Marshal(notifyMsg)
 	gs.CheckError(err)
 
-	// 방에 참가 통지
 	user.SendToAll(NewMessage(user.userID, gs_protocol.Type_NotifyJoin, msg))
 
 	// response body marshaling
@@ -117,16 +116,15 @@ func Action1Handler(user *User, data []byte) {
 	err := proto.Unmarshal(data, req)
 	gs.CheckError(err)
 
-	// TODO Action1 에 대한 로직 같은거 처리?
-	gs.Log("action1 userID : ", gs.Itoa64(req.GetUserID()))
+	// TODO create business logic for Action1 Type
+	gs.Log("Action1 userID : ", gs.Itoa64(req.GetUserID()))
 
-	// 통지(브로드캐스트) 메시지
+	// broadcast message
 	notifyMsg := new(gs_protocol.NotifyAction1Msg)
 	notifyMsg.UserID = proto.Int64(user.userID)
 	msg, err := proto.Marshal(notifyMsg)
 	gs.CheckError(err)
 
-	// 통지
 	user.SendToAll(NewMessage(user.userID, gs_protocol.Type_NotifyAction1, msg))
 
 	// response body marshaling
@@ -151,7 +149,7 @@ func QuitHandler(user *User, data []byte) {
 	gs.CheckError(err)
 	user.Push(NewMessage(user.userID, gs_protocol.Type_Quit, msg))
 
-	//	user.Leave()
+	// same act user.Leave()
 	user.exit <- struct{}{}
 }
 
