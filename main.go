@@ -21,10 +21,10 @@ var (
 )
 
 type Message struct {
-	userID    int64            // sender
+	userID    int64 // sender
 	msgType   gs_protocol.Type
-	timestamp int              // send time
-	content   []byte           // serialized google protocol-buffer message
+	timestamp int    // send time
+	content   []byte // serialized google protocol-buffer message
 }
 
 func NewMessage(userID int64, eventType gs_protocol.Type, msg []byte) *Message {
@@ -58,7 +58,7 @@ func ClientSender(user *User, c net.Conn) {
 			// msg header + msg type
 			msg := append(msgTypeBytes, m.content...) // '...' need when concat between slice+slice
 			gs.Log("Client recv, user id : " + gs.Itoa64(user.userID))
-			_, err := c.Write(msg) // 클라이언트로 데이터를 보냄
+			_, err := c.Write(msg) // send data to client
 			if err != nil {
 				gs.Log(err)
 				return
@@ -69,27 +69,24 @@ func ClientSender(user *User, c net.Conn) {
 
 func ClientReader(user *User, c net.Conn) {
 
-	data := make([]byte, 4096) // 4096 크기의 바이트 슬라이스 생성 (동적 확장됨)
+	data := make([]byte, 4096) // 4096 byte slice (dynamic resize)
 
 	for {
-		n, err := c.Read(data) // conn 에서 한줄 빼와본다
+		n, err := c.Read(data)
 		if err != nil {
 			gs.Log("Fail Stream read, err : ", err)
 			break
 		}
 
-		// header - body 형태로 (두개의 패킷이 한 라인에 와야함)
-		messageType := gs_protocol.Type(gs.ReadInt32(data[0:4])) // 메시지 타입
-		//	bodySize := gs.ReadInt32(data[4:8]) // body (serialized protobuf message) size
-
-		// body 확보
-		rawData := data[4:n] // 4~끝까지 읽으면 될려나??; <-- 이거 안되면 바디사이즈 계산해서 참조하도록 해야함
-
+		// header - body format (header + body in single line)
+		messageType := gs_protocol.Type(gs.ReadInt32(data[0:4]))
 		gs.Log("Decoding type : ", messageType)
 
+		rawData := data[4:n] // 4~ end of line <--if fail read rawData, need calculated body size data (field)
 		handler, ok := msgHandlerMapping[messageType]
+
 		if ok {
-			handler(user, rawData) // 핸들러 호출
+			handler(user, rawData) // calling proper handler function
 		} else {
 			gs.Log("Fail no function defined for type", handler)
 			break
@@ -111,7 +108,7 @@ func ClientHandler(c net.Conn) {
 func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	ln, err := net.Listen("tcp", ":8000") // TCP 프로토콜에 8000 포트로 연결을 받음
+	ln, err := net.Listen("tcp", ":8000") // using TCP protocol over 8000 port
 	if err != nil {
 		gs.Log(err)
 		return
@@ -119,15 +116,15 @@ func main() {
 
 	InitRooms()
 
-	defer ln.Close() // main 함수가 끝나기 직전에 연결 대기를 닫음
+	defer ln.Close() // reserve listen wait close
 	for {
-		conn, err := ln.Accept() // 클라이언트가 연결되면 TCP 연결을 리턴
+		conn, err := ln.Accept() // server accept client connection -> return connection
 		if err != nil {
 			gs.Log("Fail Accept err : ", err)
 			continue
 		}
-		defer conn.Close() // main 함수가 끝나기 직전에 TCP 연결을 닫음
+		defer conn.Close() // reserve tcp connection close
 
-		go ClientHandler(conn) // 패킷을 처리할 함수를 고루틴으로 실행
+		go ClientHandler(conn)
 	}
 }

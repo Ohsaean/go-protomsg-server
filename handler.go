@@ -53,8 +53,8 @@ func CreateHandler(user *User, data []byte) {
 	roomID := GetRandomRoomID()
 	r := NewRoom(roomID)
 	r.users.Set(user.userID, user) // insert user
-	user.room = r     // set room
-	rooms.Set(roomID, r) // set room into global shared map
+	user.room = r                  // set room
+	rooms.Set(roomID, r)           // set room into global shared map
 	gs.Log("Get rand room id : ", gs.Itoa64(roomID))
 
 	// response body marshaling
@@ -85,9 +85,9 @@ func JoinHandler(user *User, data []byte) {
 		return
 	}
 
-	r := value.(*Room) // 캐스팅
-	r.users.Set(user.userID, user) // 유저 객체 map 에 삽입
-	user.room = r               // 유저객체에도 룸 객체 등록
+	r := value.(*Room)
+	r.users.Set(user.userID, user)
+	user.room = r
 
 	// broadcast message
 	notifyMsg := new(gs_protocol.NotifyJoinMsg)
@@ -130,7 +130,7 @@ func Action1Handler(user *User, data []byte) {
 	// response body marshaling
 	res := new(gs_protocol.ResAction1)
 	res.UserID = proto.Int64(user.userID)
-	res.Result = proto.Int32(1) // success?
+	res.Result = proto.Int32(1) // is success?
 	msg, err = proto.Marshal(res)
 	gs.CheckError(err)
 	user.Push(NewMessage(user.userID, gs_protocol.Type_DefinedAction1, msg))
@@ -144,7 +144,7 @@ func QuitHandler(user *User, data []byte) {
 	gs.CheckError(err)
 
 	res := new(gs_protocol.ResQuit)
-	res.IsSuccess = proto.Int32(1) // success
+	res.IsSuccess = proto.Int32(1) // is success?
 	msg, err := proto.Marshal(res)
 	gs.CheckError(err)
 	user.Push(NewMessage(user.userID, gs_protocol.Type_Quit, msg))

@@ -23,12 +23,12 @@ var msgHandlerMapping = map[gs_protocol.Type]MsgHandlerFunc{
 }
 
 func main() {
-	client, err := net.Dial("tcp", "127.0.0.1:8000") // TCP 프로토콜, 127.0.0.1:8000 서버에 연결
+	client, err := net.Dial("tcp", "127.0.0.1:8000")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	defer client.Close() // main 함수가 끝나기 직전에 TCP 연결을 닫음
+	defer client.Close()
 
 	data := make([]byte, 4096)
 	exit := make(chan struct{})
@@ -36,19 +36,17 @@ func main() {
 	var userID int64
 	var method int
 	fmt.Println("=================================================================")
-	fmt.Println(" input userID (it must be a whole number greater than 0")
+	fmt.Println(" Input user ID (it must be a whole number greater than 0")
 	fmt.Println("=================================================================")
 	fmt.Print("userID : ")
 	fmt.Scanln(&userID)
 
-	// 로그인은 기본으로..
 	ReqLogin(client, userID, data)
 
-	// 송신 고루틴
 	go func() {
 		for {
 			fmt.Println("=================================================================")
-			fmt.Println(" input method number (1~5)")
+			fmt.Println(" Input command number (1~5)")
 			fmt.Println("=================================================================")
 			fmt.Println("1. room list")
 			fmt.Println("2. room create")
@@ -81,29 +79,24 @@ func main() {
 		}
 	}()
 
-	// 수신 고루틴
 	go func() {
-		data := make([]byte, 4096) // 4096 크기의 바이트 슬라이스 생성 (동적 확장됨)
+		data := make([]byte, 4096)
 
 		for {
-			n, err := client.Read(data) // conn 에서 한줄 빼와본다
+			n, err := client.Read(data)
 			if err != nil {
 				gs.Log("Fail Stream read, err : ", err)
 				break
 			}
 
-			// header - body 형태로 (두개의 패킷이 한 라인에 와야함)
-			messageType := gs_protocol.Type(gs.ReadInt32(data[0:4])) // 메시지 타입
-			//	bodySize := gs.ReadInt32(data[4:8]) // body (serialized protobuf message) size
-
-			// body 확보
-			rawData := data[4:n] // 4~끝까지 읽으면 될려나??; <-- 이거 안되면 바디사이즈 계산해서 참조하도록 해야함
-
+			messageType := gs_protocol.Type(gs.ReadInt32(data[0:4]))
 			gs.Log("Decoding type : ", messageType)
 
+			rawData := data[4:n]
 			handler, ok := msgHandlerMapping[messageType]
+
 			if ok {
-				handler(rawData) // 핸들러 호출
+				handler(rawData)
 			} else {
 				gs.Log("Fail no function defined for type", handler)
 				break
@@ -121,9 +114,9 @@ func ReqLogin(c net.Conn, userUID int64, data []byte) {
 	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Login)
 	msg, err := proto.Marshal(req)
 	gs.CheckError(err)
-	data = append(msgTypeBytes, msg...) // 메시지 타입을 붙임
+	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data) // 서버로 데이터를 보냄
+	_, err = c.Write(data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -137,8 +130,8 @@ func ResLogin(rawData []byte) {
 	res := new(gs_protocol.ResLogin)
 	err := proto.Unmarshal(rawData, res)
 	gs.CheckError(err)
-	fmt.Println("server return : userid", res.GetUserID()) // 데이터 출력
-	fmt.Println("server return : result", res.GetResult()) // 데이터 출력
+	fmt.Println("server return : user id", res.GetUserID())
+	fmt.Println("server return : result", res.GetResult())
 }
 
 func ReqRoomList(c net.Conn, userUID int64, data []byte) {
@@ -147,9 +140,9 @@ func ReqRoomList(c net.Conn, userUID int64, data []byte) {
 	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_RoomList)
 	msg, err := proto.Marshal(req)
 	gs.CheckError(err)
-	data = append(msgTypeBytes, msg...) // 메시지 타입을 붙임
+	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data) // 서버로 데이터를 보냄
+	_, err = c.Write(data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -164,7 +157,7 @@ func ResRoomList(rawData []byte) {
 	err := proto.Unmarshal(rawData, res)
 	gs.CheckError(err)
 
-	fmt.Printf("server return : room list : %v", res.GetRoomIDs()) // 데이터 출력
+	fmt.Printf("server return : room list : %v", res.GetRoomIDs())
 }
 
 func ReqCreate(c net.Conn, userUID int64, data []byte) {
@@ -173,9 +166,9 @@ func ReqCreate(c net.Conn, userUID int64, data []byte) {
 	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Create)
 	msg, err := proto.Marshal(req)
 	gs.CheckError(err)
-	data = append(msgTypeBytes, msg...) // 메시지 타입을 붙임
+	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data) // 서버로 데이터를 보냄
+	_, err = c.Write(data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -190,8 +183,8 @@ func ResCreate(rawData []byte) {
 	err := proto.Unmarshal(rawData, res)
 	gs.CheckError(err)
 
-	fmt.Println("server return : user id", res.GetUserID()) // 데이터 출력
-	fmt.Println("server return : room id", res.GetRoomID()) // 데이터 출력
+	fmt.Println("server return : user id", res.GetUserID())
+	fmt.Println("server return : room id", res.GetRoomID())
 }
 
 func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
@@ -201,9 +194,9 @@ func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
 	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Join)
 	msg, err := proto.Marshal(req)
 	gs.CheckError(err)
-	data = append(msgTypeBytes, msg...) // 메시지 타입을 붙임
+	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data) // 서버로 데이터를 보냄
+	_, err = c.Write(data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -218,9 +211,9 @@ func ResJoin(rawData []byte) {
 	err := proto.Unmarshal(rawData, res)
 	gs.CheckError(err)
 
-	fmt.Println("server return : user id", res.GetUserID())    // 데이터 출력
-	fmt.Println("server return : room id", res.GetRoomID())    // 데이터 출력
-	fmt.Printf("server return : members %v", res.GetMembers()) // 데이터 출력
+	fmt.Println("server return : user id", res.GetUserID())
+	fmt.Println("server return : room id", res.GetRoomID())
+	fmt.Printf("server return : members %v", res.GetMembers())
 }
 
 func ReqAction1(c net.Conn, userUID int64, data []byte) {
@@ -229,9 +222,9 @@ func ReqAction1(c net.Conn, userUID int64, data []byte) {
 	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_DefinedAction1)
 	msg, err := proto.Marshal(req)
 	gs.CheckError(err)
-	data = append(msgTypeBytes, msg...) // 메시지 타입을 붙임
+	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data) // 서버로 데이터를 보냄
+	_, err = c.Write(data)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -246,8 +239,8 @@ func ResAction1(rawData []byte) {
 	err := proto.Unmarshal(rawData, res)
 	gs.CheckError(err)
 
-	fmt.Println("server return : user id : ", res.GetUserID()) // 데이터 출력
-	fmt.Println("server return : result : ", res.GetResult())  // 데이터 출력
+	fmt.Println("server return : user id : ", res.GetUserID())
+	fmt.Println("server return : result : ", res.GetResult())
 
 }
 
@@ -257,9 +250,9 @@ func ReqQuit(c net.Conn, userUID int64, data []byte) {
 	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Quit)
 	msg, err := proto.Marshal(req)
 	gs.CheckError(err)
-	data = append(msgTypeBytes, msg...) // 메시지 타입을 붙임
+	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data) // 서버로 데이터를 보냄
+	_, err = c.Write(data)
 	if err != nil {
 		fmt.Println(err)
 		return

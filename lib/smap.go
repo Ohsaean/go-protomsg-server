@@ -1,10 +1,9 @@
 // Built-in map doesn't support concurrent.
 // This is concurrent map using channel, without mutex.
-// https://gist.github.com/jaehue/5d1aaf76d082f98e8dc0 에서 가져옴 (key string 타입 -> int64 타입)
-// TODO Generic 하게 사용할 방법을 찾아야 함..code generate 를 하거나 밑에 방법처럼?
-// http://blog.burntsushi.net/type-parametric-functions-golang/ (느린거 같음..)
+// This code from https://gist.github.com/jaehue/5d1aaf76d082f98e8dc0 (modify key type : string -> int64)
+// TODO use Generic code generate?
+// alter : http://blog.burntsushi.net/type-parametric-functions-golang/ (too slow?..)
 package gsutil
-
 
 // A thread safe map(type: `map[int64]interface{}`).
 // This using channel, not mutex.
@@ -114,5 +113,3 @@ func NewSMap() SharedMap {
 	go sm.run()
 	return sm
 }
-
-
