@@ -6,5 +6,5 @@ $> go build github.com/ohsaean/gogpd/server
 ```
 client
 ```bash
-$> go build github/ohsaean/gogpd/client
+$> go build github.com/ohsaean/gogpd/client
 ```
