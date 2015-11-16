@@ -3,8 +3,8 @@ package main
 import (
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	gs "github.com/Ohsaean/go-protomsg-server/lib"
-	"github.com/Ohsaean/go-protomsg-server/protobuf"
+	gs "github.com/ohsaean/gogpd/lib"
+	"github.com/ohsaean/gogpd/protobuf"
 	"net"
 )
 

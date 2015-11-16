@@ -5,7 +5,7 @@ import (
 	"fmt"
 	scribe "github.com/artyom/scribe"
 	"github.com/artyom/thrift"
-	"github.com/Ohsaean/go-protomsg-server/protobuf"
+	"github.com/ohsaean/gogpd/protobuf"
 	"math/rand"
 	"os"
 	"runtime"

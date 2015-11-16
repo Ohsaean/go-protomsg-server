@@ -2,8 +2,8 @@ package main
 
 import (
 	proto "github.com/golang/protobuf/proto"
-	gs "github.com/Ohsaean/go-protomsg-server/lib"
-	"go-protomsg-server/protobuf"
+	gs "github.com/ohsaean/gogpd/lib"
+	"github.com/ohsaean/gogpd/protobuf"
 )
 
 type MsgHandlerFunc func(user *User, data []byte)

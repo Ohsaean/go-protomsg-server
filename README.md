@@ -1,3 +1,10 @@
-# go-protomsg-server
+# gogpd (golang - google protocol buffer demo (or daemon :D)
 
-google protocol-buffer with golang demo
+server
+```bash
+$> go build github.com/ohsaean/gogpd/server
+```
+client
+```bash
+$> go build github/ohsaean/gogpd/client
+```

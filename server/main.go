@@ -1,8 +1,8 @@
 package main
 
 import (
-	gs "github.com/Ohsaean/go-protomsg-server/lib"
-	"github.com/Ohsaean/go-protomsg-server/protobuf"
+	gs "github.com/ohsaean/gogpd/lib"
+	"github.com/ohsaean/gogpd/protobuf"
 	"math"
 	"math/rand"
 	"net"
