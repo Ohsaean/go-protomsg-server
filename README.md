@@ -1,5 +1,11 @@
-# gogpd (golang - google protocol buffer demo (or daemon :D)
+# gogpd
 
+##### golang - google protocol buffer demo
+
+install
+```bash
+$> go get github.com/ohsaean/gogpd
+```
 server
 ```bash
 $> go build github.com/ohsaean/gogpd/server
