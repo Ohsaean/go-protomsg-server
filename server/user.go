@@ -24,11 +24,15 @@ func NewUser(uid int64, room *Room) *User {
 
 func (u *User) Leave() {
 	notifyMsg := new(gs_protocol.NotifyQuitMsg)
-	gsutil.Log("Leave user id : ", gsutil.Itoa64(u.userID))
+	if DEBUG {
+		gsutil.Log("Leave user id : ", gsutil.Itoa64(u.userID))
+	}
 	notifyMsg.UserID = proto.Int64(u.userID)
 
 	if u.room != nil {
-		gsutil.Log("Leave room id : ", gsutil.Itoa64(u.room.roomID))
+		if DEBUG {
+			gsutil.Log("Leave room id : ", gsutil.Itoa64(u.room.roomID))
+		}
 		notifyMsg.RoomID = proto.Int64(u.room.roomID)
 
 		msg, err := proto.Marshal(notifyMsg)
@@ -39,10 +43,14 @@ func (u *User) Leave() {
 
 		// notify all members in the room
 		u.SendToAll(NewMessage(u.userID, gs_protocol.Type_NotifyQuit, msg))
-		gsutil.Log("NotifyQuit message send")
+		if DEBUG {
+			gsutil.Log("NotifyQuit message send")
+		}
 	}
 
-	gsutil.Log("Leave func end")
+	if DEBUG {
+		gsutil.Log("Leave func end")
+	}
 }
 
 func (u *User) Push(m *Message) {

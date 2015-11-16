@@ -45,7 +45,9 @@ func CreateHandler(user *User, data []byte) {
 	gs.CheckError(err)
 
 	if user.userID != req.GetUserID() {
-		gs.Log("Fail room create, user id missmatch")
+		if DEBUG {
+			gs.Log("Fail room create, user id missmatch")
+		}
 		return
 	}
 
@@ -55,15 +57,17 @@ func CreateHandler(user *User, data []byte) {
 	r.users.Set(user.userID, user) // insert user
 	user.room = r                  // set room
 	rooms.Set(roomID, r)           // set room into global shared map
-	gs.Log("Get rand room id : ", gs.Itoa64(roomID))
-
+	if DEBUG {
+		gs.Log("Get rand room id : ", gs.Itoa64(roomID))
+	}
 	// response body marshaling
 	res := new(gs_protocol.ResCreate)
 	res.RoomID = proto.Int64(roomID)
 	res.UserID = proto.Int64(user.userID)
 
-	gs.Log("Room create, room id : ", gs.Itoa64(roomID))
-
+	if DEBUG {
+		gs.Log("Room create, room id : ", gs.Itoa64(roomID))
+	}
 	msg, err := proto.Marshal(res)
 	gs.CheckError(err)
 	user.Push(NewMessage(user.userID, gs_protocol.Type_Create, msg))
@@ -81,7 +85,9 @@ func JoinHandler(user *User, data []byte) {
 	value, ok := rooms.Get(roomID)
 
 	if !ok {
-		gs.Log("Fail room join, room does not exist, room id : ", gs.Itoa64(roomID))
+		if DEBUG {
+			gs.Log("Fail room join, room does not exist, room id : ", gs.Itoa64(roomID))
+		}
 		return
 	}
 
@@ -117,7 +123,9 @@ func Action1Handler(user *User, data []byte) {
 	gs.CheckError(err)
 
 	// TODO create business logic for Action1 Type
-	gs.Log("Action1 userID : ", gs.Itoa64(req.GetUserID()))
+	if DEBUG {
+		gs.Log("Action1 userID : ", gs.Itoa64(req.GetUserID()))
+	}
 
 	// broadcast message
 	notifyMsg := new(gs_protocol.NotifyAction1Msg)

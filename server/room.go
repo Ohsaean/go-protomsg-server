@@ -15,7 +15,9 @@ func GetRoom(roomID int64) (r *Room) {
 	value, ok := rooms.Get(roomID)
 
 	if !ok {
-		gs.Log("err: not exist room : ", roomID)
+		if DEBUG {
+			gs.Log("err: not exist room : ", roomID)
+		}
 	}
 	r = value.(*Room)
 	return
@@ -26,7 +28,9 @@ func GetRandomRoomID() (uuid int64) {
 		// TODO change room-id generate strategy
 		uuid = int64(gs.RandInt32(1, math.MaxInt32))
 		if _, ok := rooms.Get(uuid); ok {
-			gs.Log("err: exist same room id")
+			if DEBUG {
+				gs.Log("err: exist same room id")
+			}
 			continue
 		}
 		return
@@ -51,7 +55,9 @@ func (r *Room) RoomMessageLoop() {
 				value, ok := r.users.Get(userID)
 				if ok {
 					user := value.(*User)
-					gs.Log("Push message for broadcast :" + gs.Itoa64(user.userID))
+					if DEBUG {
+						gs.Log("Push message for broadcast :" + gs.Itoa64(user.userID))
+					}
 					user.Push(m)
 				}
 			}

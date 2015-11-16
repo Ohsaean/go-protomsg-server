@@ -49,7 +49,9 @@ func ClientSender(user *User, c net.Conn) {
 		select {
 		case <-user.exit:
 			// when receive signal then finish the program
-			gs.Log("Leave user id :" + gs.Itoa64(user.userID))
+			if DEBUG {
+				gs.Log("Leave user id :" + gs.Itoa64(user.userID))
+			}
 			return
 		case m := <-user.recv:
 			// on receive message
@@ -57,10 +59,14 @@ func ClientSender(user *User, c net.Conn) {
 
 			// msg header + msg type
 			msg := append(msgTypeBytes, m.content...) // '...' need when concat between slice+slice
-			gs.Log("Client recv, user id : " + gs.Itoa64(user.userID))
+			if DEBUG {
+				gs.Log("Client recv, user id : " + gs.Itoa64(user.userID))
+			}
 			_, err := c.Write(msg) // send data to client
 			if err != nil {
-				gs.Log(err)
+				if DEBUG {
+					gs.Log(err)
+				}
 				return
 			}
 		}
@@ -74,13 +80,17 @@ func ClientReader(user *User, c net.Conn) {
 	for {
 		n, err := c.Read(data)
 		if err != nil {
-			gs.Log("Fail Stream read, err : ", err)
+			if DEBUG {
+				gs.Log("Fail Stream read, err : ", err)
+			}
 			break
 		}
 
 		// header - body format (header + body in single line)
 		messageType := gs_protocol.Type(gs.ReadInt32(data[0:4]))
-		gs.Log("Decoding type : ", messageType)
+		if DEBUG {
+			gs.Log("Decoding type : ", messageType)
+		}
 
 		rawData := data[4:n] // 4~ end of line <--if fail read rawData, need calculated body size data (field)
 		handler, ok := msgHandlerMapping[messageType]
@@ -88,7 +98,9 @@ func ClientReader(user *User, c net.Conn) {
 		if ok {
 			handler(user, rawData) // calling proper handler function
 		} else {
-			gs.Log("Fail no function defined for type", handler)
+			if DEBUG {
+				gs.Log("Fail no function defined for type", handler)
+			}
 			break
 		}
 	}
@@ -99,19 +111,27 @@ func ClientReader(user *User, c net.Conn) {
 
 // On Client Connect
 func ClientHandler(c net.Conn) {
-	gs.Log("New Connection: ", c.RemoteAddr())
+
+	if DEBUG {
+		gs.Log("New Connection: ", c.RemoteAddr())
+	}
+
 	gs.WriteScribe("access", "test")
 	user := NewUser(0, nil) // empty user data
 	go ClientReader(user, c)
 	go ClientSender(user, c)
 }
 
+// http://stackoverflow.com/questions/11252846/do-const-if-statements-do-the-same-thing-as-ifdef-macros-in-go
+
 func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	ln, err := net.Listen("tcp", ":8000") // using TCP protocol over 8000 port
 	if err != nil {
-		gs.Log(err)
+		if DEBUG {
+			gs.Log(err)
+		}
 		return
 	}
 
