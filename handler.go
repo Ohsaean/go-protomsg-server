@@ -2,7 +2,7 @@ package main
 
 import (
 	proto "github.com/golang/protobuf/proto"
-	gs "go-protomsg-server/lib"
+	gs "github.com/Ohsaean/go-protomsg-server/lib"
 	"go-protomsg-server/protobuf"
 )
 
