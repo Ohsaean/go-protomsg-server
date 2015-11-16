@@ -100,6 +100,7 @@ func ClientReader(user *User, c net.Conn) {
 // On Client Connect
 func ClientHandler(c net.Conn) {
 	gs.Log("New Connection: ", c.RemoteAddr())
+	gs.WriteScribe("access", "test")
 	user := NewUser(0, nil) // empty user data
 	go ClientReader(user, c)
 	go ClientSender(user, c)

@@ -1,34 +1,34 @@
 package gsutil
 
 import (
-	"strconv"
-	"fmt"
-	"os"
 	"encoding/binary"
-	"math/rand"
+	"fmt"
+	scribe "github.com/artyom/scribe"
+	"github.com/artyom/thrift"
 	"go-protomsg-server/protobuf"
+	"math/rand"
+	"os"
+	"runtime"
+	"strconv"
 )
 
 func Itoa64(i int64) string {
 	return strconv.FormatInt(i, 10)
 }
 
-
 func Log(a ...interface{}) {
-	fmt.Println(a...);
+	fmt.Println(a...)
 }
 
 func Logf(format string, a ...interface{}) {
-	fmt.Printf(format, a...);
+	fmt.Printf(format, a...)
 }
 
-
-func CheckError(err error){
+func CheckError(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fatal error: %s", err.Error())
 	}
 }
-
 
 // http://stackoverflow.com/questions/16888357/convert-an-integer-to-a-byte-array
 func ReadInt32(data []byte) (ret int32) {
@@ -48,7 +48,6 @@ func WriteMsgType(n gs_protocol.Type) (buf []byte) {
 	return
 }
 
-
 func RandInt64(min int64, max int64) int64 {
 	return min + rand.Int63n(max-min)
 }
@@ -57,5 +56,27 @@ func RandInt32(min int32, max int32) int32 {
 	return min + rand.Int31n(max-min)
 }
 
+func WriteScribe(category string, message string) {
 
+	// currently available on linux platform
+	if runtime.GOOS != "linux" {
+		Log(category + " : " + message)
+		return
+	}
+	entry := scribe.NewLogEntry()
+	entry.Category = category
+	entry.Message = message
+	messages := []*scribe.LogEntry{entry}
+	socket, err := thrift.NewTSocket("localhost:1463")
+	CheckError(err)
 
+	transport := thrift.NewTFramedTransport(socket)
+	protocol := thrift.NewTBinaryProtocol(transport, false, false)
+	client := scribe.NewScribeClientProtocol(transport, protocol, protocol)
+
+	transport.Open()
+	result, err := client.Log(messages)
+	CheckError(err)
+	transport.Close()
+	Log(result.String())
+}
