@@ -1,6 +1,5 @@
 # gogpd
-
-##### golang - google protocol buffer demo
+golang - google protocol buffer demo
 
 install
 ```bash
