@@ -1,12 +1,16 @@
-// Built-in map doesn't support concurrent.
-// This is concurrent map using channel, without mutex.
-// This code from https://gist.github.com/jaehue/5d1aaf76d082f98e8dc0 (modify key type : string -> int64)
-// TODO use Generic code generate?
-// alter : http://blog.burntsushi.net/type-parametric-functions-golang/ (too slow?..)
-package gsutil
+package lib
+
+import (
+	"sync"
+)
+
+// sync type
+const (
+	RWMutex = 1
+	Channel = 2
+)
 
 // A thread safe map(type: `map[int64]interface{}`).
-// This using channel, not mutex.
 type SharedMap interface {
 	// Sets the given value under the specified key
 	Set(k int64, v interface{})
@@ -20,13 +24,69 @@ type SharedMap interface {
 	// Return the number of item within the map.
 	Count() int
 
+	// Return the map object
 	Map() map[int64]interface{}
 
 	// Return all the keys or a subset of the keys of an Map
 	GetKeys() []int64
 }
 
-type sharedMap struct {
+/**
+Using RWMutex
+*/
+type sharedMapRWMutex struct {
+	sync.RWMutex
+	m map[int64]interface{}
+}
+
+func (sm sharedMapRWMutex) Map() map[int64]interface{} {
+	return sm.m
+}
+
+// Sets the given value under the specified key
+func (sm sharedMapRWMutex) Set(k int64, v interface{}) {
+	sm.Lock()
+	sm.m[k] = v
+	sm.Unlock()
+}
+
+// Retrieve an item from map under given key.
+func (sm sharedMapRWMutex) Get(k int64) (interface{}, bool) {
+	sm.RLock()
+	defer sm.RUnlock()
+	v, ok := sm.m[k]
+	return v, ok
+}
+
+// Remove an item from the map.
+func (sm sharedMapRWMutex) Remove(k int64) {
+	sm.Lock()
+	delete(sm.m, k)
+	sm.Unlock()
+}
+
+// Return the number of item within the map.
+func (sm sharedMapRWMutex) Count() int {
+	sm.RLock()
+	defer sm.RUnlock()
+	return len(sm.m)
+}
+
+// Return all the keys or a subset of the keys of an Map (추가함)
+func (sm sharedMapRWMutex) GetKeys() []int64 {
+	sm.RLock()
+	defer sm.RUnlock()
+	keys := make([]int64, 0, 1024)
+	for key, _ := range sm.m {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+/**
+Using single goroutine (event loop)
+*/
+type sharedMapChannel struct {
 	m map[int64]interface{}
 	c chan command
 }
@@ -46,17 +106,17 @@ const (
 	keys
 )
 
-func (sm sharedMap) Map() map[int64]interface{} {
+func (sm sharedMapChannel) Map() map[int64]interface{} {
 	return sm.m
 }
 
 // Sets the given value under the specified key
-func (sm sharedMap) Set(k int64, v interface{}) {
+func (sm sharedMapChannel) Set(k int64, v interface{}) {
 	sm.c <- command{action: set, key: k, value: v}
 }
 
 // Retrieve an item from map under given key.
-func (sm sharedMap) Get(k int64) (interface{}, bool) {
+func (sm sharedMapChannel) Get(k int64) (interface{}, bool) {
 	callback := make(chan interface{})
 	sm.c <- command{action: get, key: k, result: callback}
 	result := (<-callback).([2]interface{})
@@ -64,25 +124,25 @@ func (sm sharedMap) Get(k int64) (interface{}, bool) {
 }
 
 // Remove an item from the map.
-func (sm sharedMap) Remove(k int64) {
+func (sm sharedMapChannel) Remove(k int64) {
 	sm.c <- command{action: remove, key: k}
 }
 
 // Return the number of item within the map.
-func (sm sharedMap) Count() int {
+func (sm sharedMapChannel) Count() int {
 	callback := make(chan interface{})
 	sm.c <- command{action: count, result: callback}
 	return (<-callback).(int)
 }
 
 // Return all the keys or a subset of the keys of an Map (추가함)
-func (sm sharedMap) GetKeys() []int64 {
+func (sm sharedMapChannel) GetKeys() []int64 {
 	callback := make(chan interface{})
 	sm.c <- command{action: keys, result: callback}
 	return (<-callback).([]int64)
 }
 
-func (sm sharedMap) run() {
+func (sm sharedMapChannel) run() {
 	for cmd := range sm.c {
 		switch cmd.action {
 		case set:
@@ -104,12 +164,21 @@ func (sm sharedMap) run() {
 	}
 }
 
-// Create a new shared map.
-func NewSMap() SharedMap {
-	sm := sharedMap{
-		m: make(map[int64]interface{}),
-		c: make(chan command),
+// Create a new shared map with sync type
+func NewSMap(syncType int) SharedMap {
+
+	var sm SharedMap
+	if syncType == RWMutex {
+		sm = sharedMapRWMutex{
+			m: make(map[int64]interface{}),
+		}
 	}
-	go sm.run()
+
+	if syncType == Channel {
+		sm = sharedMapChannel{
+			m: make(map[int64]interface{}),
+		}
+	}
+
 	return sm
 }

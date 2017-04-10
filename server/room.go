@@ -1,13 +1,13 @@
 package main
 
 import (
-	gs "github.com/ohsaean/gogpd/lib"
+	"github.com/ohsaean/gogpd/lib"
 	"math"
 )
 
 type Room struct {
-	users    gs.SharedMap
-	messages chan *Message   // broadcast message channel
+	users    lib.SharedMap
+	messages chan *Message // broadcast message channel
 	roomID   int64
 }
 
@@ -16,7 +16,7 @@ func GetRoom(roomID int64) (r *Room) {
 
 	if !ok {
 		if DEBUG {
-			gs.Log("err: not exist room : ", roomID)
+			lib.Log("err: not exist room : ", roomID)
 		}
 	}
 	r = value.(*Room)
@@ -26,10 +26,10 @@ func GetRoom(roomID int64) (r *Room) {
 func GetRandomRoomID() (uuid int64) {
 	for {
 		// TODO change room-id generate strategy
-		uuid = int64(gs.RandInt32(1, math.MaxInt32))
+		uuid = int64(lib.RandInt32(1, math.MaxInt32))
 		if _, ok := rooms.Get(uuid); ok {
 			if DEBUG {
-				gs.Log("err: exist same room id")
+				lib.Log("err: exist same room id")
 			}
 			continue
 		}
@@ -41,7 +41,7 @@ func GetRandomRoomID() (uuid int64) {
 func NewRoom(roomID int64) (r *Room) {
 	r = new(Room)
 	r.messages = make(chan *Message)
-	r.users = gs.NewSMap() // global shared map
+	r.users = lib.NewSMap(lib.Channel) // global shared map
 	r.roomID = roomID
 	go r.RoomMessageLoop() // for broadcast message
 	return
@@ -50,13 +50,13 @@ func NewRoom(roomID int64) (r *Room) {
 func (r *Room) RoomMessageLoop() {
 	// when messages channel is closed then "for-loop" will be break
 	for m := range r.messages {
-		for userID, _  := range r.users.Map() {
+		for userID, _ := range r.users.Map() {
 			if userID != m.userID {
 				value, ok := r.users.Get(userID)
 				if ok {
 					user := value.(*User)
 					if DEBUG {
-						gs.Log("Push message for broadcast :" + gs.Itoa64(user.userID))
+						lib.Log("Push message for broadcast :" + lib.Itoa64(user.userID))
 					}
 					user.Push(m)
 				}
@@ -74,7 +74,7 @@ func (r *Room) Leave(userID int64) {
 	r.users.Remove(userID)
 
 	if r.IsEmptyRoom() {
-		close(r.messages)      // close broadcast channel
+		close(r.messages) // close broadcast channel
 		rooms.Remove(r.roomID)
 	}
 }
