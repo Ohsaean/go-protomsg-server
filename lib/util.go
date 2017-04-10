@@ -1,9 +1,9 @@
-package gsutil
+package lib
 
 import (
 	"encoding/binary"
 	"fmt"
-	scribe "github.com/artyom/scribe"
+	"github.com/artyom/scribe"
 	"github.com/artyom/thrift"
 	"github.com/ohsaean/gogpd/protobuf"
 	"math/rand"
@@ -79,4 +79,13 @@ func WriteScribe(category string, message string) {
 	CheckError(err)
 	transport.Close()
 	Log(result.String())
+}
+
+func Int64SliceToString(set []int64) (str string) {
+	str += "["
+	for _, value := range set {
+		str += "," + Itoa64(value)
+	}
+	str += "]"
+	return str
 }

@@ -25,31 +25,31 @@ func NewUser(uid int64, room *Room) *User {
 func (u *User) Leave() {
 	notifyMsg := new(gs_protocol.NotifyQuitMsg)
 	if DEBUG {
-		gsutil.Log("Leave user id : ", gsutil.Itoa64(u.userID))
+		lib.Log("Leave user id : ", lib.Itoa64(u.userID))
 	}
 	notifyMsg.UserID = proto.Int64(u.userID)
 
 	if u.room != nil {
 		if DEBUG {
-			gsutil.Log("Leave room id : ", gsutil.Itoa64(u.room.roomID))
+			lib.Log("Leave room id : ", lib.Itoa64(u.room.roomID))
 		}
 		notifyMsg.RoomID = proto.Int64(u.room.roomID)
 
 		msg, err := proto.Marshal(notifyMsg)
-		gsutil.CheckError(err)
+		lib.CheckError(err)
 
 		// race condition by broadcast goroutine and ClientSender goroutine
-		 u.room.Leave(u.userID)
+		u.room.Leave(u.userID)
 
 		// notify all members in the room
 		u.SendToAll(NewMessage(u.userID, gs_protocol.Type_NotifyQuit, msg))
 		if DEBUG {
-			gsutil.Log("NotifyQuit message send")
+			lib.Log("NotifyQuit message send")
 		}
 	}
 
 	if DEBUG {
-		gsutil.Log("Leave func end")
+		lib.Log("Leave func end")
 	}
 }
 
