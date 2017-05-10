@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"github.com/golang/protobuf/proto"
-	gs "github.com/ohsaean/gogpd/lib"
+	"github.com/ohsaean/gogpd/lib"
 	"github.com/ohsaean/gogpd/protobuf"
 	"net"
 )
@@ -22,6 +24,15 @@ var msgHandlerMapping = map[gs_protocol.Type]MsgHandlerFunc{
 	gs_protocol.Type_RoomList:       ResRoomList,
 }
 
+//var buffer bytes.Buffer
+//for i := 0; i < b.N; i++ {
+//buffer.WriteString(s2)
+//}
+//s1 := buffer.String()
+
+var user_buffer bytes.Buffer
+var recv_buffer bytes.Buffer
+
 func main() {
 	client, err := net.Dial("tcp", "127.0.0.1:8000")
 	if err != nil {
@@ -35,25 +46,25 @@ func main() {
 
 	var userID int64
 	var method int
-	fmt.Println("=================================================================")
-	fmt.Println(" Input user ID (it must be a whole number greater than 0")
-	fmt.Println("=================================================================")
-	fmt.Print("userID : ")
+	AddUserBuffer("=================================================================\n")
+	AddUserBuffer(" Input user ID (it must be a whole number greater than 0\n")
+	AddUserBuffer("=================================================================\n")
+	AddUserBuffer("userID : ")
 	fmt.Scanln(&userID)
 
 	ReqLogin(client, userID, data)
 
 	go func() {
 		for {
-			fmt.Println("=================================================================")
-			fmt.Println(" Input command number (1~5)")
-			fmt.Println("=================================================================")
-			fmt.Println("1. room list")
-			fmt.Println("2. room create")
-			fmt.Println("3. join")
-			fmt.Println("4. action1")
-			fmt.Println("5. quit")
-			fmt.Print("choose number: ")
+			AddUserBuffer("=================================================================\n")
+			AddUserBuffer(" Input command number (1~5)\n")
+			AddUserBuffer("=================================================================\n")
+			AddUserBuffer("1. room list\n")
+			AddUserBuffer("2. room create\n")
+			AddUserBuffer("3. join\n")
+			AddUserBuffer("4. action1\n")
+			AddUserBuffer("5. quit\n")
+			AddUserBuffer("choose number: ")
 			fmt.Scanln(&method)
 
 			switch method {
@@ -85,12 +96,12 @@ func main() {
 		for {
 			n, err := client.Read(data)
 			if err != nil {
-				gs.Log("Fail Stream read, err : ", err)
+				lib.Log("Fail Stream read, err : ", err)
 				break
 			}
 
-			messageType := gs_protocol.Type(gs.ReadInt32(data[0:4]))
-			gs.Log("Decoding type : ", messageType)
+			messageType := gs_protocol.Type(lib.ReadInt32(data[0:4]))
+			lib.Log("Decoding type : ", messageType)
 
 			rawData := data[4:n]
 			handler, ok := msgHandlerMapping[messageType]
@@ -98,7 +109,7 @@ func main() {
 			if ok {
 				handler(rawData)
 			} else {
-				gs.Log("Fail no function defined for type", handler)
+				lib.Log("Fail no function defined for type", handler)
 				break
 			}
 		}
@@ -107,13 +118,27 @@ func main() {
 	<-exit
 }
 
+func AddUserBuffer(str string) {
+	recv_buffer.WriteString(str)
+}
+
+func AddUserBufferJson(str string, v interface{}) {
+	clientSend, err := json.Marshal(v)
+	lib.CheckError(err)
+	user_buffer.WriteString(str + string(clientSend))
+}
+
+func AddRecvBuffer(str string) {
+	recv_buffer.WriteString(str)
+}
+
 func ReqLogin(c net.Conn, userUID int64, data []byte) {
 	req := new(gs_protocol.ReqLogin)
 	req.UserID = proto.Int64(userUID)
 
-	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Login)
+	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Login)
 	msg, err := proto.Marshal(req)
-	gs.CheckError(err)
+	lib.CheckError(err)
 	data = append(msgTypeBytes, msg...)
 
 	_, err = c.Write(data)
@@ -122,24 +147,25 @@ func ReqLogin(c net.Conn, userUID int64, data []byte) {
 		return
 	}
 
-	gs.Logf("client send : %v\n", req)
+	AddUserBufferJson("client send ", req)
 }
 
 func ResLogin(rawData []byte) {
 
 	res := new(gs_protocol.ResLogin)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
-	fmt.Println("server return : user id", res.GetUserID())
-	fmt.Println("server return : result", res.GetResult())
+	lib.CheckError(err)
+
+	AddRecvBuffer("ResLogin server return : user id " + res.GetUserID())
+	AddRecvBuffer("ResLogin server return : result id " + res.GetResult())
 }
 
 func ReqRoomList(c net.Conn, userUID int64, data []byte) {
 	req := new(gs_protocol.ReqRoomList)
 	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_RoomList)
+	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_RoomList)
 	msg, err := proto.Marshal(req)
-	gs.CheckError(err)
+	lib.CheckError(err)
 	data = append(msgTypeBytes, msg...)
 
 	_, err = c.Write(data)
@@ -148,24 +174,24 @@ func ReqRoomList(c net.Conn, userUID int64, data []byte) {
 		return
 	}
 
-	gs.Logf("client send : %v\n", req)
+	AddUserBufferJson("client send ", req)
 }
 
 func ResRoomList(rawData []byte) {
 
 	res := new(gs_protocol.ResRoomList)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
+	lib.CheckError(err)
 
-	fmt.Printf("server return : room list : %v", res.GetRoomIDs())
+	AddRecvBuffer("ResRoomList server return : members " + lib.Int64SliceToString(res.GetRoomIDs()))
 }
 
 func ReqCreate(c net.Conn, userUID int64, data []byte) {
 	req := new(gs_protocol.ReqCreate)
 	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Create)
+	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Create)
 	msg, err := proto.Marshal(req)
-	gs.CheckError(err)
+	lib.CheckError(err)
 	data = append(msgTypeBytes, msg...)
 
 	_, err = c.Write(data)
@@ -174,26 +200,26 @@ func ReqCreate(c net.Conn, userUID int64, data []byte) {
 		return
 	}
 
-	gs.Logf("client send : %v\n", req)
+	AddUserBufferJson("client send ", req)
 }
 
 func ResCreate(rawData []byte) {
 
 	res := new(gs_protocol.ResCreate)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
+	lib.CheckError(err)
 
-	fmt.Println("server return : user id", res.GetUserID())
-	fmt.Println("server return : room id", res.GetRoomID())
+	AddRecvBuffer("ResCreate server return : user id " + res.GetUserID())
+	AddRecvBuffer("ResCreate server return : room id " + res.GetRoomID())
 }
 
 func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
 	req := new(gs_protocol.ReqJoin)
 	req.UserID = proto.Int64(userUID)
 	req.RoomID = proto.Int64(roomID)
-	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Join)
+	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Join)
 	msg, err := proto.Marshal(req)
-	gs.CheckError(err)
+	lib.CheckError(err)
 	data = append(msgTypeBytes, msg...)
 
 	_, err = c.Write(data)
@@ -202,26 +228,26 @@ func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
 		return
 	}
 
-	gs.Logf("client send : %v\n", req)
+	AddUserBufferJson("client send ", req)
 }
 
 func ResJoin(rawData []byte) {
 
 	res := new(gs_protocol.ResJoin)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
+	lib.CheckError(err)
 
-	fmt.Println("server return : user id", res.GetUserID())
-	fmt.Println("server return : room id", res.GetRoomID())
-	fmt.Printf("server return : members %v", res.GetMembers())
+	AddRecvBuffer("ResJoin server return : user id " + res.GetUserID())
+	AddRecvBuffer("ResJoin server return : room id " + res.GetRoomID())
+	AddRecvBuffer("ResJoin server return : members " + lib.Int64SliceToString(res.GetMembers()))
 }
 
 func ReqAction1(c net.Conn, userUID int64, data []byte) {
 	req := new(gs_protocol.ReqAction1)
 	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_DefinedAction1)
+	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_DefinedAction1)
 	msg, err := proto.Marshal(req)
-	gs.CheckError(err)
+	lib.CheckError(err)
 	data = append(msgTypeBytes, msg...)
 
 	_, err = c.Write(data)
@@ -230,26 +256,25 @@ func ReqAction1(c net.Conn, userUID int64, data []byte) {
 		return
 	}
 
-	gs.Logf("client send : %v\n", req)
+	AddUserBufferJson("client send ", req)
 }
 
 func ResAction1(rawData []byte) {
 
 	res := new(gs_protocol.ResAction1)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
+	lib.CheckError(err)
 
-	fmt.Println("server return : user id : ", res.GetUserID())
-	fmt.Println("server return : result : ", res.GetResult())
-
+	AddRecvBuffer("ResAction1 server return : user id " + res.GetUserID())
+	AddRecvBuffer("ResAction1 server return : result " + res.GetResult())
 }
 
 func ReqQuit(c net.Conn, userUID int64, data []byte) {
 	req := new(gs_protocol.ReqQuit)
 	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := gs.WriteMsgType(gs_protocol.Type_Quit)
+	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Quit)
 	msg, err := proto.Marshal(req)
-	gs.CheckError(err)
+	lib.CheckError(err)
 	data = append(msgTypeBytes, msg...)
 
 	_, err = c.Write(data)
@@ -258,34 +283,35 @@ func ReqQuit(c net.Conn, userUID int64, data []byte) {
 		return
 	}
 
-	gs.Logf("client send : %v\n", req)
+	AddUserBufferJson("client send ", req)
 }
 
 func ResQuit(rawData []byte) {
 	res := new(gs_protocol.ResQuit)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
-	fmt.Println("server return : user id : ", res.GetIsSuccess())
+	lib.CheckError(err)
+	AddRecvBuffer("ResQuit server return : is success? " + res.GetIsSuccess())
 }
 
 func NotifyJoinHandler(rawData []byte) {
 	res := new(gs_protocol.NotifyJoinMsg)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
-	fmt.Println("server notify return : user id : ", res.GetUserID())
-	fmt.Println("server notify return : room id : ", res.GetRoomID())
+	lib.CheckError(err)
+
+	AddRecvBuffer("NotifyJoin server return : user id " + res.GetUserID())
+	AddRecvBuffer("NotifyJoin server return : room id " + res.GetRoomID())
 }
 
 func NotifyAction1Handler(rawData []byte) {
 	res := new(gs_protocol.NotifyAction1Msg)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
-	fmt.Println("server notify return : user id : ", res.GetUserID())
+	lib.CheckError(err)
+	AddRecvBuffer("NotifyAction1 server return : user id " + res.GetUserID())
 }
 
 func NotifyQuitHandler(rawData []byte) {
 	res := new(gs_protocol.NotifyQuitMsg)
 	err := proto.Unmarshal(rawData, res)
-	gs.CheckError(err)
-	fmt.Println("server notify return : user id : ", res.GetUserID())
+	lib.CheckError(err)
+	AddRecvBuffer("NotifyQuit server return : user id " + res.GetUserID())
 }

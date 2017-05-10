@@ -41,7 +41,7 @@ func InitRooms() {
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
-func ClientSender(user *User, c net.Conn) {
+func onClientWrite(user *User, c net.Conn) {
 
 	defer user.Leave()
 
@@ -73,24 +73,24 @@ func ClientSender(user *User, c net.Conn) {
 	}
 }
 
-func ClientReader(user *User, c net.Conn) {
+func onClientRead(user *User, c net.Conn) {
 
 	data := make([]byte, 4096) // 4096 byte slice (dynamic resize)
 
+	c.SetReadDeadline(time.Now().Add(1 * time.Second))
+	defer c.Close() // reserve tcp connection close
 	for {
 		n, err := c.Read(data)
 		if err != nil {
-			if DEBUG {
-				lib.Log("Fail Stream read, err : ", err)
-			}
+
+			lib.Log("Fail Stream read, err : ", err)
 			break
 		}
 
 		// header - body format (header + body in single line)
 		messageType := gs_protocol.Type(lib.ReadInt32(data[0:4]))
-		if DEBUG {
-			lib.Log("Decoding type : ", messageType)
-		}
+
+		lib.Log("Decoding type : ", messageType)
 
 		rawData := data[4:n] // 4~ end of line <--if fail read rawData, need calculated body size data (field)
 		handler, ok := msgHandler[messageType]
@@ -98,9 +98,9 @@ func ClientReader(user *User, c net.Conn) {
 		if ok {
 			handler(user, rawData) // calling proper handler function
 		} else {
-			if DEBUG {
-				lib.Log("Fail no function defined for type", handler)
-			}
+
+			lib.Log("Fail no function defined for type", messageType)
+
 			break
 		}
 	}
@@ -109,23 +109,22 @@ func ClientReader(user *User, c net.Conn) {
 	user.exit <- struct{}{}
 }
 
-// On Client Connect
-func ClientHandler(c net.Conn) {
-
+func onConnect(c net.Conn) {
 	if DEBUG {
-		lib.Log("New Connection: ", c.RemoteAddr())
+		lib.Log("New connection: ", c.RemoteAddr())
 	}
 
-	lib.WriteScribe("access", "test")
 	user := NewUser(0, nil) // empty user data
-	go ClientReader(user, c)
-	go ClientSender(user, c)
+
+	go onClientRead(user, c)
+	go onClientWrite(user, c)
 }
 
 func main() {
 
 	runtime.GOMAXPROCS(runtime.NumCPU())
 	ln, err := net.Listen("tcp", ":8000") // using TCP protocol over 8000 port
+	defer ln.Close()                      // reserve listen wait close
 	if err != nil {
 		if DEBUG {
 			lib.Log(err)
@@ -135,15 +134,13 @@ func main() {
 
 	InitRooms()
 
-	defer ln.Close() // reserve listen wait close
 	for {
 		conn, err := ln.Accept() // server accept client connection -> return connection
 		if err != nil {
 			lib.Log("Fail Accept err : ", err)
 			continue
 		}
-		defer conn.Close() // reserve tcp connection close
 
-		go ClientHandler(conn)
+		onConnect(conn)
 	}
 }

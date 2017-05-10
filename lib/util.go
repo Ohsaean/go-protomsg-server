@@ -3,12 +3,9 @@ package lib
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/artyom/scribe"
-	"github.com/artyom/thrift"
 	"github.com/ohsaean/gogpd/protobuf"
 	"math/rand"
 	"os"
-	"runtime"
 	"strconv"
 )
 
@@ -54,31 +51,6 @@ func RandInt64(min int64, max int64) int64 {
 
 func RandInt32(min int32, max int32) int32 {
 	return min + rand.Int31n(max-min)
-}
-
-func WriteScribe(category string, message string) {
-
-	// currently available on linux platform
-	if runtime.GOOS != "linux" {
-		Log(category + " : " + message)
-		return
-	}
-	entry := scribe.NewLogEntry()
-	entry.Category = category
-	entry.Message = message
-	messages := []*scribe.LogEntry{entry}
-	socket, err := thrift.NewTSocket("localhost:1463")
-	CheckError(err)
-
-	transport := thrift.NewTFramedTransport(socket)
-	protocol := thrift.NewTBinaryProtocol(transport, false, false)
-	client := scribe.NewScribeClientProtocol(transport, protocol, protocol)
-
-	transport.Open()
-	result, err := client.Log(messages)
-	CheckError(err)
-	transport.Close()
-	Log(result.String())
 }
 
 func Int64SliceToString(set []int64) (str string) {
