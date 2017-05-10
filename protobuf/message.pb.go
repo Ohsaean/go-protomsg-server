@@ -9,17 +9,18 @@ It is generated from these files:
 	message.proto
 
 It has these top-level messages:
+	Message
 	ReqLogin
-	ResLogin
 	ReqCreate
-	ResCreate
 	ReqJoin
-	ResJoin
 	ReqAction1
-	ResAction1
 	ReqQuit
-	ResQuit
 	ReqRoomList
+	ResLogin
+	ResCreate
+	ResJoin
+	ResAction1
+	ResQuit
 	ResRoomList
 	NotifyJoinMsg
 	NotifyAction1Msg
@@ -29,11 +30,9 @@ It has these top-level messages:
 package gs_protocol
 
 import proto "github.com/golang/protobuf/proto"
-import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
-var _ = math.Inf
 
 type Type int32
 
@@ -78,381 +77,309 @@ var Type_value = map[string]int32{
 	"Error":          1000,
 }
 
-func (x Type) Enum() *Type {
-	p := new(Type)
-	*p = x
-	return p
-}
 func (x Type) String() string {
 	return proto.EnumName(Type_name, int32(x))
-}
-func (x *Type) UnmarshalJSON(data []byte) error {
-	value, err := proto.UnmarshalJSONEnum(Type_value, data, "Type")
-	if err != nil {
-		return err
-	}
-	*x = Type(value)
-	return nil
 }
 
 type ErrorType int32
 
 const (
-	ErrorType_Unknown ErrorType = 1
+	ErrorType_Unknown ErrorType = 0
 )
 
 var ErrorType_name = map[int32]string{
-	1: "Unknown",
+	0: "Unknown",
 }
 var ErrorType_value = map[string]int32{
-	"Unknown": 1,
+	"Unknown": 0,
 }
 
-func (x ErrorType) Enum() *ErrorType {
-	p := new(ErrorType)
-	*p = x
-	return p
-}
 func (x ErrorType) String() string {
 	return proto.EnumName(ErrorType_name, int32(x))
 }
-func (x *ErrorType) UnmarshalJSON(data []byte) error {
-	value, err := proto.UnmarshalJSONEnum(ErrorType_value, data, "ErrorType")
-	if err != nil {
-		return err
+
+type Message struct {
+	Type Type `protobuf:"varint,1,opt,name=type,enum=gs_protocol.Type" json:"type,omitempty"`
+	// request
+	ReqLogin    *ReqLogin    `protobuf:"bytes,2,opt,name=req_login" json:"req_login,omitempty"`
+	ReqCreate   *ReqCreate   `protobuf:"bytes,3,opt,name=req_create" json:"req_create,omitempty"`
+	ReqJoin     *ReqJoin     `protobuf:"bytes,4,opt,name=req_join" json:"req_join,omitempty"`
+	ReqAction1  *ReqAction1  `protobuf:"bytes,5,opt,name=req_action1" json:"req_action1,omitempty"`
+	ReqQuit     *ReqQuit     `protobuf:"bytes,6,opt,name=req_quit" json:"req_quit,omitempty"`
+	ReqRoomList *ReqRoomList `protobuf:"bytes,7,opt,name=req_room_list" json:"req_room_list,omitempty"`
+	// response
+	ResLogin    *ResLogin    `protobuf:"bytes,8,opt,name=res_login" json:"res_login,omitempty"`
+	ResCreate   *ResCreate   `protobuf:"bytes,9,opt,name=res_create" json:"res_create,omitempty"`
+	ResJoin     *ResJoin     `protobuf:"bytes,10,opt,name=res_join" json:"res_join,omitempty"`
+	ResAction1  *ResAction1  `protobuf:"bytes,11,opt,name=res_action1" json:"res_action1,omitempty"`
+	ResQuit     *ResQuit     `protobuf:"bytes,12,opt,name=res_quit" json:"res_quit,omitempty"`
+	ResRoomList *ResRoomList `protobuf:"bytes,13,opt,name=res_room_list" json:"res_room_list,omitempty"`
+	// notify
+	NotifyJoin    *NotifyJoinMsg    `protobuf:"bytes,14,opt,name=notify_join" json:"notify_join,omitempty"`
+	NotifyAction1 *NotifyAction1Msg `protobuf:"bytes,15,opt,name=notify_action1" json:"notify_action1,omitempty"`
+	NotifyQuit    *NotifyQuitMsg    `protobuf:"bytes,16,opt,name=notify_quit" json:"notify_quit,omitempty"`
+	// error
+	Error *ErrorMsg `protobuf:"bytes,1000,opt,name=error" json:"error,omitempty"`
+}
+
+func (m *Message) Reset()         { *m = Message{} }
+func (m *Message) String() string { return proto.CompactTextString(m) }
+func (*Message) ProtoMessage()    {}
+
+func (m *Message) GetReqLogin() *ReqLogin {
+	if m != nil {
+		return m.ReqLogin
 	}
-	*x = ErrorType(value)
 	return nil
 }
 
+func (m *Message) GetReqCreate() *ReqCreate {
+	if m != nil {
+		return m.ReqCreate
+	}
+	return nil
+}
+
+func (m *Message) GetReqJoin() *ReqJoin {
+	if m != nil {
+		return m.ReqJoin
+	}
+	return nil
+}
+
+func (m *Message) GetReqAction1() *ReqAction1 {
+	if m != nil {
+		return m.ReqAction1
+	}
+	return nil
+}
+
+func (m *Message) GetReqQuit() *ReqQuit {
+	if m != nil {
+		return m.ReqQuit
+	}
+	return nil
+}
+
+func (m *Message) GetReqRoomList() *ReqRoomList {
+	if m != nil {
+		return m.ReqRoomList
+	}
+	return nil
+}
+
+func (m *Message) GetResLogin() *ResLogin {
+	if m != nil {
+		return m.ResLogin
+	}
+	return nil
+}
+
+func (m *Message) GetResCreate() *ResCreate {
+	if m != nil {
+		return m.ResCreate
+	}
+	return nil
+}
+
+func (m *Message) GetResJoin() *ResJoin {
+	if m != nil {
+		return m.ResJoin
+	}
+	return nil
+}
+
+func (m *Message) GetResAction1() *ResAction1 {
+	if m != nil {
+		return m.ResAction1
+	}
+	return nil
+}
+
+func (m *Message) GetResQuit() *ResQuit {
+	if m != nil {
+		return m.ResQuit
+	}
+	return nil
+}
+
+func (m *Message) GetResRoomList() *ResRoomList {
+	if m != nil {
+		return m.ResRoomList
+	}
+	return nil
+}
+
+func (m *Message) GetNotifyJoin() *NotifyJoinMsg {
+	if m != nil {
+		return m.NotifyJoin
+	}
+	return nil
+}
+
+func (m *Message) GetNotifyAction1() *NotifyAction1Msg {
+	if m != nil {
+		return m.NotifyAction1
+	}
+	return nil
+}
+
+func (m *Message) GetNotifyQuit() *NotifyQuitMsg {
+	if m != nil {
+		return m.NotifyQuit
+	}
+	return nil
+}
+
+func (m *Message) GetError() *ErrorMsg {
+	if m != nil {
+		return m.Error
+	}
+	return nil
+}
+
+// request payload
 type ReqLogin struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *ReqLogin) Reset()         { *m = ReqLogin{} }
 func (m *ReqLogin) String() string { return proto.CompactTextString(m) }
 func (*ReqLogin) ProtoMessage()    {}
 
-func (m *ReqLogin) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-type ResLogin struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	Result           *int32 `protobuf:"varint,2,opt,name=result" json:"result,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
-}
-
-func (m *ResLogin) Reset()         { *m = ResLogin{} }
-func (m *ResLogin) String() string { return proto.CompactTextString(m) }
-func (*ResLogin) ProtoMessage()    {}
-
-func (m *ResLogin) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *ResLogin) GetResult() int32 {
-	if m != nil && m.Result != nil {
-		return *m.Result
-	}
-	return 0
-}
-
 type ReqCreate struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *ReqCreate) Reset()         { *m = ReqCreate{} }
 func (m *ReqCreate) String() string { return proto.CompactTextString(m) }
 func (*ReqCreate) ProtoMessage()    {}
 
-func (m *ReqCreate) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-type ResCreate struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	RoomID           *int64 `protobuf:"varint,2,req,name=roomID" json:"roomID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
-}
-
-func (m *ResCreate) Reset()         { *m = ResCreate{} }
-func (m *ResCreate) String() string { return proto.CompactTextString(m) }
-func (*ResCreate) ProtoMessage()    {}
-
-func (m *ResCreate) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *ResCreate) GetRoomID() int64 {
-	if m != nil && m.RoomID != nil {
-		return *m.RoomID
-	}
-	return 0
-}
-
 type ReqJoin struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	RoomID           *int64 `protobuf:"varint,2,req,name=roomID" json:"roomID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
 func (m *ReqJoin) Reset()         { *m = ReqJoin{} }
 func (m *ReqJoin) String() string { return proto.CompactTextString(m) }
 func (*ReqJoin) ProtoMessage()    {}
 
-func (m *ReqJoin) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *ReqJoin) GetRoomID() int64 {
-	if m != nil && m.RoomID != nil {
-		return *m.RoomID
-	}
-	return 0
-}
-
-type ResJoin struct {
-	UserID           *int64  `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	RoomID           *int64  `protobuf:"varint,2,req,name=roomID" json:"roomID,omitempty"`
-	Members          []int64 `protobuf:"varint,3,rep,name=members" json:"members,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
-}
-
-func (m *ResJoin) Reset()         { *m = ResJoin{} }
-func (m *ResJoin) String() string { return proto.CompactTextString(m) }
-func (*ResJoin) ProtoMessage()    {}
-
-func (m *ResJoin) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *ResJoin) GetRoomID() int64 {
-	if m != nil && m.RoomID != nil {
-		return *m.RoomID
-	}
-	return 0
-}
-
-func (m *ResJoin) GetMembers() []int64 {
-	if m != nil {
-		return m.Members
-	}
-	return nil
-}
-
 type ReqAction1 struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *ReqAction1) Reset()         { *m = ReqAction1{} }
 func (m *ReqAction1) String() string { return proto.CompactTextString(m) }
 func (*ReqAction1) ProtoMessage()    {}
 
-func (m *ReqAction1) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-type ResAction1 struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	Result           *int32 `protobuf:"varint,2,opt,name=result" json:"result,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
-}
-
-func (m *ResAction1) Reset()         { *m = ResAction1{} }
-func (m *ResAction1) String() string { return proto.CompactTextString(m) }
-func (*ResAction1) ProtoMessage()    {}
-
-func (m *ResAction1) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *ResAction1) GetResult() int32 {
-	if m != nil && m.Result != nil {
-		return *m.Result
-	}
-	return 0
-}
-
 type ReqQuit struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *ReqQuit) Reset()         { *m = ReqQuit{} }
 func (m *ReqQuit) String() string { return proto.CompactTextString(m) }
 func (*ReqQuit) ProtoMessage()    {}
 
-func (m *ReqQuit) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-type ResQuit struct {
-	IsSuccess        *int32 `protobuf:"varint,1,req,name=isSuccess" json:"isSuccess,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
-}
-
-func (m *ResQuit) Reset()         { *m = ResQuit{} }
-func (m *ResQuit) String() string { return proto.CompactTextString(m) }
-func (*ResQuit) ProtoMessage()    {}
-
-func (m *ResQuit) GetIsSuccess() int32 {
-	if m != nil && m.IsSuccess != nil {
-		return *m.IsSuccess
-	}
-	return 0
-}
-
 type ReqRoomList struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *ReqRoomList) Reset()         { *m = ReqRoomList{} }
 func (m *ReqRoomList) String() string { return proto.CompactTextString(m) }
 func (*ReqRoomList) ProtoMessage()    {}
 
-func (m *ReqRoomList) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
+// response payload
+type ResLogin struct {
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	Result int32 `protobuf:"varint,2,opt,name=result" json:"result,omitempty"`
 }
 
+func (m *ResLogin) Reset()         { *m = ResLogin{} }
+func (m *ResLogin) String() string { return proto.CompactTextString(m) }
+func (*ResLogin) ProtoMessage()    {}
+
+type ResCreate struct {
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
+}
+
+func (m *ResCreate) Reset()         { *m = ResCreate{} }
+func (m *ResCreate) String() string { return proto.CompactTextString(m) }
+func (*ResCreate) ProtoMessage()    {}
+
+type ResJoin struct {
+	UserID  int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomID  int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
+	Members int64 `protobuf:"varint,3,opt,name=members" json:"members,omitempty"`
+}
+
+func (m *ResJoin) Reset()         { *m = ResJoin{} }
+func (m *ResJoin) String() string { return proto.CompactTextString(m) }
+func (*ResJoin) ProtoMessage()    {}
+
+type ResAction1 struct {
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	Result int32 `protobuf:"varint,2,opt,name=result" json:"result,omitempty"`
+}
+
+func (m *ResAction1) Reset()         { *m = ResAction1{} }
+func (m *ResAction1) String() string { return proto.CompactTextString(m) }
+func (*ResAction1) ProtoMessage()    {}
+
+type ResQuit struct {
+	UserID    int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	IsSuccess int32 `protobuf:"varint,2,opt,name=isSuccess" json:"isSuccess,omitempty"`
+}
+
+func (m *ResQuit) Reset()         { *m = ResQuit{} }
+func (m *ResQuit) String() string { return proto.CompactTextString(m) }
+func (*ResQuit) ProtoMessage()    {}
+
 type ResRoomList struct {
-	RoomIDs          []int64 `protobuf:"varint,1,rep,name=roomIDs" json:"roomIDs,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	UserID  int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomIDs int64 `protobuf:"varint,2,opt,name=roomIDs" json:"roomIDs,omitempty"`
 }
 
 func (m *ResRoomList) Reset()         { *m = ResRoomList{} }
 func (m *ResRoomList) String() string { return proto.CompactTextString(m) }
 func (*ResRoomList) ProtoMessage()    {}
 
-func (m *ResRoomList) GetRoomIDs() []int64 {
-	if m != nil {
-		return m.RoomIDs
-	}
-	return nil
-}
-
 // notify message type (for client)
 type NotifyJoinMsg struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	RoomID           *int64 `protobuf:"varint,2,req,name=roomID" json:"roomID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
 func (m *NotifyJoinMsg) Reset()         { *m = NotifyJoinMsg{} }
 func (m *NotifyJoinMsg) String() string { return proto.CompactTextString(m) }
 func (*NotifyJoinMsg) ProtoMessage()    {}
 
-func (m *NotifyJoinMsg) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *NotifyJoinMsg) GetRoomID() int64 {
-	if m != nil && m.RoomID != nil {
-		return *m.RoomID
-	}
-	return 0
-}
-
 type NotifyAction1Msg struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
 func (m *NotifyAction1Msg) Reset()         { *m = NotifyAction1Msg{} }
 func (m *NotifyAction1Msg) String() string { return proto.CompactTextString(m) }
 func (*NotifyAction1Msg) ProtoMessage()    {}
 
-func (m *NotifyAction1Msg) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
 type NotifyQuitMsg struct {
-	UserID           *int64 `protobuf:"varint,1,req,name=userID" json:"userID,omitempty"`
-	RoomID           *int64 `protobuf:"varint,2,req,name=roomID" json:"roomID,omitempty"`
-	XXX_unrecognized []byte `json:"-"`
+	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
 func (m *NotifyQuitMsg) Reset()         { *m = NotifyQuitMsg{} }
 func (m *NotifyQuitMsg) String() string { return proto.CompactTextString(m) }
 func (*NotifyQuitMsg) ProtoMessage()    {}
 
-func (m *NotifyQuitMsg) GetUserID() int64 {
-	if m != nil && m.UserID != nil {
-		return *m.UserID
-	}
-	return 0
-}
-
-func (m *NotifyQuitMsg) GetRoomID() int64 {
-	if m != nil && m.RoomID != nil {
-		return *m.RoomID
-	}
-	return 0
-}
-
+// error message
 type ErrorMsg struct {
-	ErrCode          *int32  `protobuf:"varint,1,req,name=errCode" json:"errCode,omitempty"`
-	ErrMessage       *string `protobuf:"bytes,2,req,name=errMessage" json:"errMessage,omitempty"`
-	XXX_unrecognized []byte  `json:"-"`
+	ErrCode    int32  `protobuf:"varint,1,opt,name=errCode" json:"errCode,omitempty"`
+	ErrMessage string `protobuf:"bytes,2,opt,name=errMessage" json:"errMessage,omitempty"`
 }
 
 func (m *ErrorMsg) Reset()         { *m = ErrorMsg{} }
 func (m *ErrorMsg) String() string { return proto.CompactTextString(m) }
 func (*ErrorMsg) ProtoMessage()    {}
-
-func (m *ErrorMsg) GetErrCode() int32 {
-	if m != nil && m.ErrCode != nil {
-		return *m.ErrCode
-	}
-	return 0
-}
-
-func (m *ErrorMsg) GetErrMessage() string {
-	if m != nil && m.ErrMessage != nil {
-		return *m.ErrMessage
-	}
-	return ""
-}
 
 func init() {
 	proto.RegisterEnum("gs_protocol.Type", Type_name, Type_value)

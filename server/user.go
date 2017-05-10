@@ -38,7 +38,7 @@ func (u *User) Leave() {
 		msg, err := proto.Marshal(notifyMsg)
 		lib.CheckError(err)
 
-		// race condition by broadcast goroutine and ClientSender goroutine
+		// race condition by broadcast goroutine and onClientWrite goroutine
 		u.room.Leave(u.userID)
 
 		// notify all members in the room
