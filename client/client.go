@@ -1,21 +1,20 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"github.com/lxn/walk"
-	. "github.com/lxn/walk/declarative"
-	"github.com/ohsaean/gogpd/lib"
-	"github.com/ohsaean/gogpd/protobuf"
 	"log"
 	"net"
 	"os"
-	"os/user"
 	"strconv"
+
+	"github.com/golang/protobuf/proto"
+	"github.com/lxn/walk"
+	walk_dcl "github.com/lxn/walk/declarative"
+	"github.com/ohsaean/gogpd/lib"
+	"github.com/ohsaean/gogpd/protobuf"
 )
 
+// MsgHandlerFunc 메시지 핸들러
 type MsgHandlerFunc func(data *gs_protocol.Message) bool
 
 var msgHandlerMapping = map[gs_protocol.Type]MsgHandlerFunc{
@@ -29,15 +28,6 @@ var msgHandlerMapping = map[gs_protocol.Type]MsgHandlerFunc{
 	gs_protocol.Type_NotifyQuit:     NotifyQuitHandler,
 	gs_protocol.Type_RoomList:       ResRoomList,
 }
-
-//var buffer bytes.Buffer
-//for i := 0; i < b.N; i++ {
-//buffer.WriteString(s2)
-//}
-//s1 := buffer.String()
-
-var user_buffer bytes.Buffer
-var recv_buffer bytes.Buffer
 
 var inputString string
 
@@ -55,16 +45,22 @@ func main() {
 	var userID int64
 	var mw *walk.MainWindow
 
-	err = MainWindow{
+	err = walk_dcl.MainWindow{
 		AssignTo: &mw,
 		Title:    "Walk LogView Example",
-		MinSize:  Size{320, 240},
-		Size:     Size{600, 400},
-		Layout:   VBox{},
-		Children: []Widget{
-			HSplitter{
-				Children: []Widget{
-					PushButton{
+		MinSize: walk_dcl.Size{
+			Width:  320,
+			Height: 240,
+		},
+		Size: walk_dcl.Size{
+			Width:  600,
+			Height: 400,
+		},
+		Layout: walk_dcl.VBox{},
+		Children: []walk_dcl.Widget{
+			walk_dcl.HSplitter{
+				Children: []walk_dcl.Widget{
+					walk_dcl.PushButton{
 						Text: "login",
 						OnClicked: func() {
 							if cmd, err := RunUserIdDialog(mw); err != nil {
@@ -78,21 +74,21 @@ func main() {
 							}
 						},
 					},
-					PushButton{
+					walk_dcl.PushButton{
 						Text: "room create",
 						OnClicked: func() {
 							log.Println("req create user id : ", userID)
 							ReqCreate(client, userID, data)
 						},
 					},
-					PushButton{
+					walk_dcl.PushButton{
 						Text: "room list",
 						OnClicked: func() {
 							log.Println("room list user id : ", userID)
 							ReqRoomList(client, userID, data)
 						},
 					},
-					PushButton{
+					walk_dcl.PushButton{
 						Text: "join",
 						OnClicked: func() {
 							if cmd, err := RunRoomJoinDialog(mw); err != nil {
@@ -106,13 +102,13 @@ func main() {
 							}
 						},
 					},
-					PushButton{
+					walk_dcl.PushButton{
 						Text: "action1",
 						OnClicked: func() {
 							ReqAction1(client, userID, data)
 						},
 					},
-					PushButton{
+					walk_dcl.PushButton{
 						Text: "quit",
 						OnClicked: func() {
 							log.Println("quit user id : ", userID)
@@ -288,7 +284,7 @@ func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
 	log.Printf("ReqJoin client send : %x\n", msg)
 }
 
-func ResJoin(data *gs_protocol.Message) {
+func ResJoin(data *gs_protocol.Message) bool {
 
 	res := data.GetResJoin()
 	if res == nil {
@@ -296,9 +292,14 @@ func ResJoin(data *gs_protocol.Message) {
 		return false
 	}
 
-	log.Println("ResLogin server return : user id : ", res.UserID())
-	log.Println("ResLogin server return : result code : ", res.ResultCode())
+	log.Println("ResLogin server return : user id : ", res.UserID)
+	log.Println("ResLogin server return : room id : ", res.RoomID)
 
+	for _, memberID := range res.Members {
+		log.Println("ResLogin server return : room id : ", memberID)
+	}
+
+	return true
 }
 
 func ReqAction1(c net.Conn, userUID int64, data []byte) {

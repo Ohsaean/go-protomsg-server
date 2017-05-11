@@ -30,9 +30,10 @@ func LoginHandler(user *User, data *gs_protocol.Message) {
 	// response body marshaling
 	res := &gs_protocol.Message{
 		Type: gs_protocol.Type_Login,
-		ResLogin: &gs_protocol.ResLogin{
-			Result: 1,
-			UserID: user.userID,
+		Payload: &gs_protocol.Message_ReqLogin{
+			ReqLogin: &gs_protocol.ReqLogin{
+				UserID: user.userID,
+			},
 		},
 	}
 

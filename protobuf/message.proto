@@ -85,7 +85,7 @@ message ResCreate {
 message ResJoin {
 	int64 userID = 1;
 	int64 roomID = 2;
-	int64 members = 3;
+	repeated int64 members = 3;
 }
 message ResAction1 {
 	int64 userID = 1;

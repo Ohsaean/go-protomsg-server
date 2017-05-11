@@ -30,9 +30,19 @@ It has these top-level messages:
 package gs_protocol
 
 import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
+var _ = fmt.Errorf
+var _ = math.Inf
+
+// This is a compile-time assertion to ensure that this generated file
+// is compatible with the proto package it is being compiled against.
+// A compilation error at this line likely means your copy of the
+// proto package needs to be updated.
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type Type int32
 
@@ -80,6 +90,7 @@ var Type_value = map[string]int32{
 func (x Type) String() string {
 	return proto.EnumName(Type_name, int32(x))
 }
+func (Type) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
 
 type ErrorType int32
 
@@ -97,145 +108,569 @@ var ErrorType_value = map[string]int32{
 func (x ErrorType) String() string {
 	return proto.EnumName(ErrorType_name, int32(x))
 }
+func (ErrorType) EnumDescriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
 
 type Message struct {
 	Type Type `protobuf:"varint,1,opt,name=type,enum=gs_protocol.Type" json:"type,omitempty"`
-	// request
-	ReqLogin    *ReqLogin    `protobuf:"bytes,2,opt,name=req_login" json:"req_login,omitempty"`
-	ReqCreate   *ReqCreate   `protobuf:"bytes,3,opt,name=req_create" json:"req_create,omitempty"`
-	ReqJoin     *ReqJoin     `protobuf:"bytes,4,opt,name=req_join" json:"req_join,omitempty"`
-	ReqAction1  *ReqAction1  `protobuf:"bytes,5,opt,name=req_action1" json:"req_action1,omitempty"`
-	ReqQuit     *ReqQuit     `protobuf:"bytes,6,opt,name=req_quit" json:"req_quit,omitempty"`
-	ReqRoomList *ReqRoomList `protobuf:"bytes,7,opt,name=req_room_list" json:"req_room_list,omitempty"`
-	// response
-	ResLogin    *ResLogin    `protobuf:"bytes,8,opt,name=res_login" json:"res_login,omitempty"`
-	ResCreate   *ResCreate   `protobuf:"bytes,9,opt,name=res_create" json:"res_create,omitempty"`
-	ResJoin     *ResJoin     `protobuf:"bytes,10,opt,name=res_join" json:"res_join,omitempty"`
-	ResAction1  *ResAction1  `protobuf:"bytes,11,opt,name=res_action1" json:"res_action1,omitempty"`
-	ResQuit     *ResQuit     `protobuf:"bytes,12,opt,name=res_quit" json:"res_quit,omitempty"`
-	ResRoomList *ResRoomList `protobuf:"bytes,13,opt,name=res_room_list" json:"res_room_list,omitempty"`
-	// notify
-	NotifyJoin    *NotifyJoinMsg    `protobuf:"bytes,14,opt,name=notify_join" json:"notify_join,omitempty"`
-	NotifyAction1 *NotifyAction1Msg `protobuf:"bytes,15,opt,name=notify_action1" json:"notify_action1,omitempty"`
-	NotifyQuit    *NotifyQuitMsg    `protobuf:"bytes,16,opt,name=notify_quit" json:"notify_quit,omitempty"`
-	// error
-	Error *ErrorMsg `protobuf:"bytes,1000,opt,name=error" json:"error,omitempty"`
+	// Types that are valid to be assigned to Payload:
+	//	*Message_ReqLogin
+	//	*Message_ReqCreate
+	//	*Message_ReqJoin
+	//	*Message_ReqAction1
+	//	*Message_ReqQuit
+	//	*Message_ReqRoomList
+	//	*Message_ResLogin
+	//	*Message_ResCreate
+	//	*Message_ResJoin
+	//	*Message_ResAction1
+	//	*Message_ResQuit
+	//	*Message_ResRoomList
+	//	*Message_NotifyJoin
+	//	*Message_NotifyAction1
+	//	*Message_NotifyQuit
+	//	*Message_Error
+	Payload isMessage_Payload `protobuf_oneof:"payload"`
 }
 
-func (m *Message) Reset()         { *m = Message{} }
-func (m *Message) String() string { return proto.CompactTextString(m) }
-func (*Message) ProtoMessage()    {}
+func (m *Message) Reset()                    { *m = Message{} }
+func (m *Message) String() string            { return proto.CompactTextString(m) }
+func (*Message) ProtoMessage()               {}
+func (*Message) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{0} }
+
+type isMessage_Payload interface {
+	isMessage_Payload()
+}
+
+type Message_ReqLogin struct {
+	ReqLogin *ReqLogin `protobuf:"bytes,2,opt,name=req_login,json=reqLogin,oneof"`
+}
+type Message_ReqCreate struct {
+	ReqCreate *ReqCreate `protobuf:"bytes,3,opt,name=req_create,json=reqCreate,oneof"`
+}
+type Message_ReqJoin struct {
+	ReqJoin *ReqJoin `protobuf:"bytes,4,opt,name=req_join,json=reqJoin,oneof"`
+}
+type Message_ReqAction1 struct {
+	ReqAction1 *ReqAction1 `protobuf:"bytes,5,opt,name=req_action1,json=reqAction1,oneof"`
+}
+type Message_ReqQuit struct {
+	ReqQuit *ReqQuit `protobuf:"bytes,6,opt,name=req_quit,json=reqQuit,oneof"`
+}
+type Message_ReqRoomList struct {
+	ReqRoomList *ReqRoomList `protobuf:"bytes,7,opt,name=req_room_list,json=reqRoomList,oneof"`
+}
+type Message_ResLogin struct {
+	ResLogin *ResLogin `protobuf:"bytes,8,opt,name=res_login,json=resLogin,oneof"`
+}
+type Message_ResCreate struct {
+	ResCreate *ResCreate `protobuf:"bytes,9,opt,name=res_create,json=resCreate,oneof"`
+}
+type Message_ResJoin struct {
+	ResJoin *ResJoin `protobuf:"bytes,10,opt,name=res_join,json=resJoin,oneof"`
+}
+type Message_ResAction1 struct {
+	ResAction1 *ResAction1 `protobuf:"bytes,11,opt,name=res_action1,json=resAction1,oneof"`
+}
+type Message_ResQuit struct {
+	ResQuit *ResQuit `protobuf:"bytes,12,opt,name=res_quit,json=resQuit,oneof"`
+}
+type Message_ResRoomList struct {
+	ResRoomList *ResRoomList `protobuf:"bytes,13,opt,name=res_room_list,json=resRoomList,oneof"`
+}
+type Message_NotifyJoin struct {
+	NotifyJoin *NotifyJoinMsg `protobuf:"bytes,14,opt,name=notify_join,json=notifyJoin,oneof"`
+}
+type Message_NotifyAction1 struct {
+	NotifyAction1 *NotifyAction1Msg `protobuf:"bytes,15,opt,name=notify_action1,json=notifyAction1,oneof"`
+}
+type Message_NotifyQuit struct {
+	NotifyQuit *NotifyQuitMsg `protobuf:"bytes,16,opt,name=notify_quit,json=notifyQuit,oneof"`
+}
+type Message_Error struct {
+	Error *ErrorMsg `protobuf:"bytes,1000,opt,name=error,oneof"`
+}
+
+func (*Message_ReqLogin) isMessage_Payload()      {}
+func (*Message_ReqCreate) isMessage_Payload()     {}
+func (*Message_ReqJoin) isMessage_Payload()       {}
+func (*Message_ReqAction1) isMessage_Payload()    {}
+func (*Message_ReqQuit) isMessage_Payload()       {}
+func (*Message_ReqRoomList) isMessage_Payload()   {}
+func (*Message_ResLogin) isMessage_Payload()      {}
+func (*Message_ResCreate) isMessage_Payload()     {}
+func (*Message_ResJoin) isMessage_Payload()       {}
+func (*Message_ResAction1) isMessage_Payload()    {}
+func (*Message_ResQuit) isMessage_Payload()       {}
+func (*Message_ResRoomList) isMessage_Payload()   {}
+func (*Message_NotifyJoin) isMessage_Payload()    {}
+func (*Message_NotifyAction1) isMessage_Payload() {}
+func (*Message_NotifyQuit) isMessage_Payload()    {}
+func (*Message_Error) isMessage_Payload()         {}
+
+func (m *Message) GetPayload() isMessage_Payload {
+	if m != nil {
+		return m.Payload
+	}
+	return nil
+}
+
+func (m *Message) GetType() Type {
+	if m != nil {
+		return m.Type
+	}
+	return Type_Undefined
+}
 
 func (m *Message) GetReqLogin() *ReqLogin {
-	if m != nil {
-		return m.ReqLogin
+	if x, ok := m.GetPayload().(*Message_ReqLogin); ok {
+		return x.ReqLogin
 	}
 	return nil
 }
 
 func (m *Message) GetReqCreate() *ReqCreate {
-	if m != nil {
-		return m.ReqCreate
+	if x, ok := m.GetPayload().(*Message_ReqCreate); ok {
+		return x.ReqCreate
 	}
 	return nil
 }
 
 func (m *Message) GetReqJoin() *ReqJoin {
-	if m != nil {
-		return m.ReqJoin
+	if x, ok := m.GetPayload().(*Message_ReqJoin); ok {
+		return x.ReqJoin
 	}
 	return nil
 }
 
 func (m *Message) GetReqAction1() *ReqAction1 {
-	if m != nil {
-		return m.ReqAction1
+	if x, ok := m.GetPayload().(*Message_ReqAction1); ok {
+		return x.ReqAction1
 	}
 	return nil
 }
 
 func (m *Message) GetReqQuit() *ReqQuit {
-	if m != nil {
-		return m.ReqQuit
+	if x, ok := m.GetPayload().(*Message_ReqQuit); ok {
+		return x.ReqQuit
 	}
 	return nil
 }
 
 func (m *Message) GetReqRoomList() *ReqRoomList {
-	if m != nil {
-		return m.ReqRoomList
+	if x, ok := m.GetPayload().(*Message_ReqRoomList); ok {
+		return x.ReqRoomList
 	}
 	return nil
 }
 
 func (m *Message) GetResLogin() *ResLogin {
-	if m != nil {
-		return m.ResLogin
+	if x, ok := m.GetPayload().(*Message_ResLogin); ok {
+		return x.ResLogin
 	}
 	return nil
 }
 
 func (m *Message) GetResCreate() *ResCreate {
-	if m != nil {
-		return m.ResCreate
+	if x, ok := m.GetPayload().(*Message_ResCreate); ok {
+		return x.ResCreate
 	}
 	return nil
 }
 
 func (m *Message) GetResJoin() *ResJoin {
-	if m != nil {
-		return m.ResJoin
+	if x, ok := m.GetPayload().(*Message_ResJoin); ok {
+		return x.ResJoin
 	}
 	return nil
 }
 
 func (m *Message) GetResAction1() *ResAction1 {
-	if m != nil {
-		return m.ResAction1
+	if x, ok := m.GetPayload().(*Message_ResAction1); ok {
+		return x.ResAction1
 	}
 	return nil
 }
 
 func (m *Message) GetResQuit() *ResQuit {
-	if m != nil {
-		return m.ResQuit
+	if x, ok := m.GetPayload().(*Message_ResQuit); ok {
+		return x.ResQuit
 	}
 	return nil
 }
 
 func (m *Message) GetResRoomList() *ResRoomList {
-	if m != nil {
-		return m.ResRoomList
+	if x, ok := m.GetPayload().(*Message_ResRoomList); ok {
+		return x.ResRoomList
 	}
 	return nil
 }
 
 func (m *Message) GetNotifyJoin() *NotifyJoinMsg {
-	if m != nil {
-		return m.NotifyJoin
+	if x, ok := m.GetPayload().(*Message_NotifyJoin); ok {
+		return x.NotifyJoin
 	}
 	return nil
 }
 
 func (m *Message) GetNotifyAction1() *NotifyAction1Msg {
-	if m != nil {
-		return m.NotifyAction1
+	if x, ok := m.GetPayload().(*Message_NotifyAction1); ok {
+		return x.NotifyAction1
 	}
 	return nil
 }
 
 func (m *Message) GetNotifyQuit() *NotifyQuitMsg {
-	if m != nil {
-		return m.NotifyQuit
+	if x, ok := m.GetPayload().(*Message_NotifyQuit); ok {
+		return x.NotifyQuit
 	}
 	return nil
 }
 
 func (m *Message) GetError() *ErrorMsg {
-	if m != nil {
-		return m.Error
+	if x, ok := m.GetPayload().(*Message_Error); ok {
+		return x.Error
 	}
 	return nil
+}
+
+// XXX_OneofFuncs is for the internal use of the proto package.
+func (*Message) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _Message_OneofMarshaler, _Message_OneofUnmarshaler, _Message_OneofSizer, []interface{}{
+		(*Message_ReqLogin)(nil),
+		(*Message_ReqCreate)(nil),
+		(*Message_ReqJoin)(nil),
+		(*Message_ReqAction1)(nil),
+		(*Message_ReqQuit)(nil),
+		(*Message_ReqRoomList)(nil),
+		(*Message_ResLogin)(nil),
+		(*Message_ResCreate)(nil),
+		(*Message_ResJoin)(nil),
+		(*Message_ResAction1)(nil),
+		(*Message_ResQuit)(nil),
+		(*Message_ResRoomList)(nil),
+		(*Message_NotifyJoin)(nil),
+		(*Message_NotifyAction1)(nil),
+		(*Message_NotifyQuit)(nil),
+		(*Message_Error)(nil),
+	}
+}
+
+func _Message_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*Message)
+	// payload
+	switch x := m.Payload.(type) {
+	case *Message_ReqLogin:
+		b.EncodeVarint(2<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ReqLogin); err != nil {
+			return err
+		}
+	case *Message_ReqCreate:
+		b.EncodeVarint(3<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ReqCreate); err != nil {
+			return err
+		}
+	case *Message_ReqJoin:
+		b.EncodeVarint(4<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ReqJoin); err != nil {
+			return err
+		}
+	case *Message_ReqAction1:
+		b.EncodeVarint(5<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ReqAction1); err != nil {
+			return err
+		}
+	case *Message_ReqQuit:
+		b.EncodeVarint(6<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ReqQuit); err != nil {
+			return err
+		}
+	case *Message_ReqRoomList:
+		b.EncodeVarint(7<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ReqRoomList); err != nil {
+			return err
+		}
+	case *Message_ResLogin:
+		b.EncodeVarint(8<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ResLogin); err != nil {
+			return err
+		}
+	case *Message_ResCreate:
+		b.EncodeVarint(9<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ResCreate); err != nil {
+			return err
+		}
+	case *Message_ResJoin:
+		b.EncodeVarint(10<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ResJoin); err != nil {
+			return err
+		}
+	case *Message_ResAction1:
+		b.EncodeVarint(11<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ResAction1); err != nil {
+			return err
+		}
+	case *Message_ResQuit:
+		b.EncodeVarint(12<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ResQuit); err != nil {
+			return err
+		}
+	case *Message_ResRoomList:
+		b.EncodeVarint(13<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.ResRoomList); err != nil {
+			return err
+		}
+	case *Message_NotifyJoin:
+		b.EncodeVarint(14<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.NotifyJoin); err != nil {
+			return err
+		}
+	case *Message_NotifyAction1:
+		b.EncodeVarint(15<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.NotifyAction1); err != nil {
+			return err
+		}
+	case *Message_NotifyQuit:
+		b.EncodeVarint(16<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.NotifyQuit); err != nil {
+			return err
+		}
+	case *Message_Error:
+		b.EncodeVarint(1000<<3 | proto.WireBytes)
+		if err := b.EncodeMessage(x.Error); err != nil {
+			return err
+		}
+	case nil:
+	default:
+		return fmt.Errorf("Message.Payload has unexpected type %T", x)
+	}
+	return nil
+}
+
+func _Message_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*Message)
+	switch tag {
+	case 2: // payload.req_login
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ReqLogin)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ReqLogin{msg}
+		return true, err
+	case 3: // payload.req_create
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ReqCreate)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ReqCreate{msg}
+		return true, err
+	case 4: // payload.req_join
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ReqJoin)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ReqJoin{msg}
+		return true, err
+	case 5: // payload.req_action1
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ReqAction1)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ReqAction1{msg}
+		return true, err
+	case 6: // payload.req_quit
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ReqQuit)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ReqQuit{msg}
+		return true, err
+	case 7: // payload.req_room_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ReqRoomList)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ReqRoomList{msg}
+		return true, err
+	case 8: // payload.res_login
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ResLogin)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ResLogin{msg}
+		return true, err
+	case 9: // payload.res_create
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ResCreate)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ResCreate{msg}
+		return true, err
+	case 10: // payload.res_join
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ResJoin)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ResJoin{msg}
+		return true, err
+	case 11: // payload.res_action1
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ResAction1)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ResAction1{msg}
+		return true, err
+	case 12: // payload.res_quit
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ResQuit)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ResQuit{msg}
+		return true, err
+	case 13: // payload.res_room_list
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ResRoomList)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_ResRoomList{msg}
+		return true, err
+	case 14: // payload.notify_join
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(NotifyJoinMsg)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_NotifyJoin{msg}
+		return true, err
+	case 15: // payload.notify_action1
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(NotifyAction1Msg)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_NotifyAction1{msg}
+		return true, err
+	case 16: // payload.notify_quit
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(NotifyQuitMsg)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_NotifyQuit{msg}
+		return true, err
+	case 1000: // payload.error
+		if wire != proto.WireBytes {
+			return true, proto.ErrInternalBadWireType
+		}
+		msg := new(ErrorMsg)
+		err := b.DecodeMessage(msg)
+		m.Payload = &Message_Error{msg}
+		return true, err
+	default:
+		return false, nil
+	}
+}
+
+func _Message_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*Message)
+	// payload
+	switch x := m.Payload.(type) {
+	case *Message_ReqLogin:
+		s := proto.Size(x.ReqLogin)
+		n += proto.SizeVarint(2<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ReqCreate:
+		s := proto.Size(x.ReqCreate)
+		n += proto.SizeVarint(3<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ReqJoin:
+		s := proto.Size(x.ReqJoin)
+		n += proto.SizeVarint(4<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ReqAction1:
+		s := proto.Size(x.ReqAction1)
+		n += proto.SizeVarint(5<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ReqQuit:
+		s := proto.Size(x.ReqQuit)
+		n += proto.SizeVarint(6<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ReqRoomList:
+		s := proto.Size(x.ReqRoomList)
+		n += proto.SizeVarint(7<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ResLogin:
+		s := proto.Size(x.ResLogin)
+		n += proto.SizeVarint(8<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ResCreate:
+		s := proto.Size(x.ResCreate)
+		n += proto.SizeVarint(9<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ResJoin:
+		s := proto.Size(x.ResJoin)
+		n += proto.SizeVarint(10<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ResAction1:
+		s := proto.Size(x.ResAction1)
+		n += proto.SizeVarint(11<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ResQuit:
+		s := proto.Size(x.ResQuit)
+		n += proto.SizeVarint(12<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_ResRoomList:
+		s := proto.Size(x.ResRoomList)
+		n += proto.SizeVarint(13<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_NotifyJoin:
+		s := proto.Size(x.NotifyJoin)
+		n += proto.SizeVarint(14<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_NotifyAction1:
+		s := proto.Size(x.NotifyAction1)
+		n += proto.SizeVarint(15<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_NotifyQuit:
+		s := proto.Size(x.NotifyQuit)
+		n += proto.SizeVarint(16<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case *Message_Error:
+		s := proto.Size(x.Error)
+		n += proto.SizeVarint(1000<<3 | proto.WireBytes)
+		n += proto.SizeVarint(uint64(s))
+		n += s
+	case nil:
+	default:
+		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
+	}
+	return n
 }
 
 // request payload
@@ -243,50 +678,105 @@ type ReqLogin struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
-func (m *ReqLogin) Reset()         { *m = ReqLogin{} }
-func (m *ReqLogin) String() string { return proto.CompactTextString(m) }
-func (*ReqLogin) ProtoMessage()    {}
+func (m *ReqLogin) Reset()                    { *m = ReqLogin{} }
+func (m *ReqLogin) String() string            { return proto.CompactTextString(m) }
+func (*ReqLogin) ProtoMessage()               {}
+func (*ReqLogin) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{1} }
+
+func (m *ReqLogin) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
 
 type ReqCreate struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
-func (m *ReqCreate) Reset()         { *m = ReqCreate{} }
-func (m *ReqCreate) String() string { return proto.CompactTextString(m) }
-func (*ReqCreate) ProtoMessage()    {}
+func (m *ReqCreate) Reset()                    { *m = ReqCreate{} }
+func (m *ReqCreate) String() string            { return proto.CompactTextString(m) }
+func (*ReqCreate) ProtoMessage()               {}
+func (*ReqCreate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{2} }
+
+func (m *ReqCreate) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
 
 type ReqJoin struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
-func (m *ReqJoin) Reset()         { *m = ReqJoin{} }
-func (m *ReqJoin) String() string { return proto.CompactTextString(m) }
-func (*ReqJoin) ProtoMessage()    {}
+func (m *ReqJoin) Reset()                    { *m = ReqJoin{} }
+func (m *ReqJoin) String() string            { return proto.CompactTextString(m) }
+func (*ReqJoin) ProtoMessage()               {}
+func (*ReqJoin) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{3} }
+
+func (m *ReqJoin) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *ReqJoin) GetRoomID() int64 {
+	if m != nil {
+		return m.RoomID
+	}
+	return 0
+}
 
 type ReqAction1 struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
-func (m *ReqAction1) Reset()         { *m = ReqAction1{} }
-func (m *ReqAction1) String() string { return proto.CompactTextString(m) }
-func (*ReqAction1) ProtoMessage()    {}
+func (m *ReqAction1) Reset()                    { *m = ReqAction1{} }
+func (m *ReqAction1) String() string            { return proto.CompactTextString(m) }
+func (*ReqAction1) ProtoMessage()               {}
+func (*ReqAction1) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{4} }
+
+func (m *ReqAction1) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
 
 type ReqQuit struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
-func (m *ReqQuit) Reset()         { *m = ReqQuit{} }
-func (m *ReqQuit) String() string { return proto.CompactTextString(m) }
-func (*ReqQuit) ProtoMessage()    {}
+func (m *ReqQuit) Reset()                    { *m = ReqQuit{} }
+func (m *ReqQuit) String() string            { return proto.CompactTextString(m) }
+func (*ReqQuit) ProtoMessage()               {}
+func (*ReqQuit) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{5} }
+
+func (m *ReqQuit) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
 
 type ReqRoomList struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
-func (m *ReqRoomList) Reset()         { *m = ReqRoomList{} }
-func (m *ReqRoomList) String() string { return proto.CompactTextString(m) }
-func (*ReqRoomList) ProtoMessage()    {}
+func (m *ReqRoomList) Reset()                    { *m = ReqRoomList{} }
+func (m *ReqRoomList) String() string            { return proto.CompactTextString(m) }
+func (*ReqRoomList) ProtoMessage()               {}
+func (*ReqRoomList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{6} }
+
+func (m *ReqRoomList) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
 
 // response payload
 type ResLogin struct {
@@ -294,55 +784,152 @@ type ResLogin struct {
 	Result int32 `protobuf:"varint,2,opt,name=result" json:"result,omitempty"`
 }
 
-func (m *ResLogin) Reset()         { *m = ResLogin{} }
-func (m *ResLogin) String() string { return proto.CompactTextString(m) }
-func (*ResLogin) ProtoMessage()    {}
+func (m *ResLogin) Reset()                    { *m = ResLogin{} }
+func (m *ResLogin) String() string            { return proto.CompactTextString(m) }
+func (*ResLogin) ProtoMessage()               {}
+func (*ResLogin) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{7} }
+
+func (m *ResLogin) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *ResLogin) GetResult() int32 {
+	if m != nil {
+		return m.Result
+	}
+	return 0
+}
 
 type ResCreate struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
-func (m *ResCreate) Reset()         { *m = ResCreate{} }
-func (m *ResCreate) String() string { return proto.CompactTextString(m) }
-func (*ResCreate) ProtoMessage()    {}
+func (m *ResCreate) Reset()                    { *m = ResCreate{} }
+func (m *ResCreate) String() string            { return proto.CompactTextString(m) }
+func (*ResCreate) ProtoMessage()               {}
+func (*ResCreate) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{8} }
 
-type ResJoin struct {
-	UserID  int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
-	RoomID  int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
-	Members int64 `protobuf:"varint,3,opt,name=members" json:"members,omitempty"`
+func (m *ResCreate) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
 }
 
-func (m *ResJoin) Reset()         { *m = ResJoin{} }
-func (m *ResJoin) String() string { return proto.CompactTextString(m) }
-func (*ResJoin) ProtoMessage()    {}
+func (m *ResCreate) GetRoomID() int64 {
+	if m != nil {
+		return m.RoomID
+	}
+	return 0
+}
+
+type ResJoin struct {
+	UserID  int64   `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomID  int64   `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
+	Members []int64 `protobuf:"varint,3,rep,packed,name=members" json:"members,omitempty"`
+}
+
+func (m *ResJoin) Reset()                    { *m = ResJoin{} }
+func (m *ResJoin) String() string            { return proto.CompactTextString(m) }
+func (*ResJoin) ProtoMessage()               {}
+func (*ResJoin) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{9} }
+
+func (m *ResJoin) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *ResJoin) GetRoomID() int64 {
+	if m != nil {
+		return m.RoomID
+	}
+	return 0
+}
+
+func (m *ResJoin) GetMembers() []int64 {
+	if m != nil {
+		return m.Members
+	}
+	return nil
+}
 
 type ResAction1 struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 	Result int32 `protobuf:"varint,2,opt,name=result" json:"result,omitempty"`
 }
 
-func (m *ResAction1) Reset()         { *m = ResAction1{} }
-func (m *ResAction1) String() string { return proto.CompactTextString(m) }
-func (*ResAction1) ProtoMessage()    {}
+func (m *ResAction1) Reset()                    { *m = ResAction1{} }
+func (m *ResAction1) String() string            { return proto.CompactTextString(m) }
+func (*ResAction1) ProtoMessage()               {}
+func (*ResAction1) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{10} }
+
+func (m *ResAction1) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *ResAction1) GetResult() int32 {
+	if m != nil {
+		return m.Result
+	}
+	return 0
+}
 
 type ResQuit struct {
 	UserID    int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 	IsSuccess int32 `protobuf:"varint,2,opt,name=isSuccess" json:"isSuccess,omitempty"`
 }
 
-func (m *ResQuit) Reset()         { *m = ResQuit{} }
-func (m *ResQuit) String() string { return proto.CompactTextString(m) }
-func (*ResQuit) ProtoMessage()    {}
+func (m *ResQuit) Reset()                    { *m = ResQuit{} }
+func (m *ResQuit) String() string            { return proto.CompactTextString(m) }
+func (*ResQuit) ProtoMessage()               {}
+func (*ResQuit) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{11} }
+
+func (m *ResQuit) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *ResQuit) GetIsSuccess() int32 {
+	if m != nil {
+		return m.IsSuccess
+	}
+	return 0
+}
 
 type ResRoomList struct {
 	UserID  int64   `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
-	RoomIDs []int64 `protobuf:"varint,2,rep,name=roomIDs" json:"roomIDs,omitempty"`
+	RoomIDs []int64 `protobuf:"varint,2,rep,packed,name=roomIDs" json:"roomIDs,omitempty"`
 }
 
-func (m *ResRoomList) Reset()         { *m = ResRoomList{} }
-func (m *ResRoomList) String() string { return proto.CompactTextString(m) }
-func (*ResRoomList) ProtoMessage()    {}
+func (m *ResRoomList) Reset()                    { *m = ResRoomList{} }
+func (m *ResRoomList) String() string            { return proto.CompactTextString(m) }
+func (*ResRoomList) ProtoMessage()               {}
+func (*ResRoomList) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{12} }
+
+func (m *ResRoomList) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *ResRoomList) GetRoomIDs() []int64 {
+	if m != nil {
+		return m.RoomIDs
+	}
+	return nil
+}
 
 // notify message type (for client)
 type NotifyJoinMsg struct {
@@ -350,26 +937,64 @@ type NotifyJoinMsg struct {
 	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
-func (m *NotifyJoinMsg) Reset()         { *m = NotifyJoinMsg{} }
-func (m *NotifyJoinMsg) String() string { return proto.CompactTextString(m) }
-func (*NotifyJoinMsg) ProtoMessage()    {}
+func (m *NotifyJoinMsg) Reset()                    { *m = NotifyJoinMsg{} }
+func (m *NotifyJoinMsg) String() string            { return proto.CompactTextString(m) }
+func (*NotifyJoinMsg) ProtoMessage()               {}
+func (*NotifyJoinMsg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{13} }
+
+func (m *NotifyJoinMsg) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *NotifyJoinMsg) GetRoomID() int64 {
+	if m != nil {
+		return m.RoomID
+	}
+	return 0
+}
 
 type NotifyAction1Msg struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 }
 
-func (m *NotifyAction1Msg) Reset()         { *m = NotifyAction1Msg{} }
-func (m *NotifyAction1Msg) String() string { return proto.CompactTextString(m) }
-func (*NotifyAction1Msg) ProtoMessage()    {}
+func (m *NotifyAction1Msg) Reset()                    { *m = NotifyAction1Msg{} }
+func (m *NotifyAction1Msg) String() string            { return proto.CompactTextString(m) }
+func (*NotifyAction1Msg) ProtoMessage()               {}
+func (*NotifyAction1Msg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{14} }
+
+func (m *NotifyAction1Msg) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
 
 type NotifyQuitMsg struct {
 	UserID int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
 	RoomID int64 `protobuf:"varint,2,opt,name=roomID" json:"roomID,omitempty"`
 }
 
-func (m *NotifyQuitMsg) Reset()         { *m = NotifyQuitMsg{} }
-func (m *NotifyQuitMsg) String() string { return proto.CompactTextString(m) }
-func (*NotifyQuitMsg) ProtoMessage()    {}
+func (m *NotifyQuitMsg) Reset()                    { *m = NotifyQuitMsg{} }
+func (m *NotifyQuitMsg) String() string            { return proto.CompactTextString(m) }
+func (*NotifyQuitMsg) ProtoMessage()               {}
+func (*NotifyQuitMsg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{15} }
+
+func (m *NotifyQuitMsg) GetUserID() int64 {
+	if m != nil {
+		return m.UserID
+	}
+	return 0
+}
+
+func (m *NotifyQuitMsg) GetRoomID() int64 {
+	if m != nil {
+		return m.RoomID
+	}
+	return 0
+}
 
 // error message
 type ErrorMsg struct {
@@ -377,11 +1002,95 @@ type ErrorMsg struct {
 	ErrMessage string `protobuf:"bytes,2,opt,name=errMessage" json:"errMessage,omitempty"`
 }
 
-func (m *ErrorMsg) Reset()         { *m = ErrorMsg{} }
-func (m *ErrorMsg) String() string { return proto.CompactTextString(m) }
-func (*ErrorMsg) ProtoMessage()    {}
+func (m *ErrorMsg) Reset()                    { *m = ErrorMsg{} }
+func (m *ErrorMsg) String() string            { return proto.CompactTextString(m) }
+func (*ErrorMsg) ProtoMessage()               {}
+func (*ErrorMsg) Descriptor() ([]byte, []int) { return fileDescriptor0, []int{16} }
+
+func (m *ErrorMsg) GetErrCode() int32 {
+	if m != nil {
+		return m.ErrCode
+	}
+	return 0
+}
+
+func (m *ErrorMsg) GetErrMessage() string {
+	if m != nil {
+		return m.ErrMessage
+	}
+	return ""
+}
 
 func init() {
+	proto.RegisterType((*Message)(nil), "gs_protocol.Message")
+	proto.RegisterType((*ReqLogin)(nil), "gs_protocol.ReqLogin")
+	proto.RegisterType((*ReqCreate)(nil), "gs_protocol.ReqCreate")
+	proto.RegisterType((*ReqJoin)(nil), "gs_protocol.ReqJoin")
+	proto.RegisterType((*ReqAction1)(nil), "gs_protocol.ReqAction1")
+	proto.RegisterType((*ReqQuit)(nil), "gs_protocol.ReqQuit")
+	proto.RegisterType((*ReqRoomList)(nil), "gs_protocol.ReqRoomList")
+	proto.RegisterType((*ResLogin)(nil), "gs_protocol.ResLogin")
+	proto.RegisterType((*ResCreate)(nil), "gs_protocol.ResCreate")
+	proto.RegisterType((*ResJoin)(nil), "gs_protocol.ResJoin")
+	proto.RegisterType((*ResAction1)(nil), "gs_protocol.ResAction1")
+	proto.RegisterType((*ResQuit)(nil), "gs_protocol.ResQuit")
+	proto.RegisterType((*ResRoomList)(nil), "gs_protocol.ResRoomList")
+	proto.RegisterType((*NotifyJoinMsg)(nil), "gs_protocol.NotifyJoinMsg")
+	proto.RegisterType((*NotifyAction1Msg)(nil), "gs_protocol.NotifyAction1Msg")
+	proto.RegisterType((*NotifyQuitMsg)(nil), "gs_protocol.NotifyQuitMsg")
+	proto.RegisterType((*ErrorMsg)(nil), "gs_protocol.ErrorMsg")
 	proto.RegisterEnum("gs_protocol.Type", Type_name, Type_value)
 	proto.RegisterEnum("gs_protocol.ErrorType", ErrorType_name, ErrorType_value)
+}
+
+func init() { proto.RegisterFile("message.proto", fileDescriptor0) }
+
+var fileDescriptor0 = []byte{
+	// 734 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x95, 0xdd, 0x6e, 0xd3, 0x4a,
+	0x10, 0xc7, 0x93, 0xe6, 0xc3, 0xf1, 0xb8, 0xc9, 0x71, 0x57, 0xe7, 0xf4, 0x58, 0x08, 0x50, 0x31,
+	0x54, 0xaa, 0x7a, 0x11, 0xa9, 0x05, 0x09, 0x51, 0x3e, 0x2a, 0x68, 0x40, 0x2d, 0x6a, 0x91, 0x70,
+	0xe9, 0x75, 0x94, 0x26, 0xdb, 0xc8, 0x90, 0x78, 0xd3, 0x1d, 0x47, 0x28, 0x8f, 0xc3, 0x33, 0xf1,
+	0x12, 0x7d, 0x0c, 0xb4, 0xb3, 0xeb, 0xd8, 0x8e, 0xec, 0x56, 0xe5, 0x6e, 0x67, 0x77, 0xfe, 0x3b,
+	0xf3, 0xff, 0xd9, 0x63, 0x43, 0x7b, 0xca, 0x11, 0x07, 0x63, 0xde, 0x9d, 0x49, 0x11, 0x0b, 0xe6,
+	0x8c, 0xb1, 0x4f, 0xab, 0xa1, 0x98, 0xf8, 0xbf, 0x2d, 0xb0, 0xce, 0xf4, 0x31, 0xdb, 0x86, 0x7a,
+	0xbc, 0x98, 0x71, 0xaf, 0xba, 0x55, 0xdd, 0xe9, 0xec, 0x6f, 0x74, 0x33, 0x79, 0xdd, 0x6f, 0x8b,
+	0x19, 0x0f, 0xe8, 0x98, 0xbd, 0x00, 0x5b, 0xf2, 0xeb, 0xfe, 0x44, 0x8c, 0xc3, 0xc8, 0x5b, 0xdb,
+	0xaa, 0xee, 0x38, 0xfb, 0xff, 0xe5, 0x72, 0x03, 0x7e, 0x7d, 0xaa, 0x0e, 0x8f, 0x2b, 0x41, 0x4b,
+	0x9a, 0x35, 0x7b, 0x09, 0xa0, 0x54, 0x43, 0xc9, 0x07, 0x31, 0xf7, 0x6a, 0x24, 0xdb, 0x5c, 0x95,
+	0x1d, 0xd1, 0xe9, 0x71, 0x25, 0x50, 0x15, 0x74, 0xc0, 0xf6, 0x40, 0x5d, 0xd2, 0xff, 0x2e, 0xc2,
+	0xc8, 0xab, 0x93, 0xec, 0xdf, 0x55, 0xd9, 0x67, 0x41, 0xc5, 0x2c, 0xa9, 0x97, 0xec, 0x00, 0x1c,
+	0x25, 0x19, 0x0c, 0xe3, 0x50, 0x44, 0x7b, 0x5e, 0x83, 0x54, 0xff, 0xaf, 0xaa, 0xde, 0xeb, 0xe3,
+	0xe3, 0x4a, 0xa0, 0x3a, 0x33, 0x51, 0x52, 0xee, 0x7a, 0x1e, 0xc6, 0x5e, 0xb3, 0xb8, 0xdc, 0xd7,
+	0x79, 0x18, 0x9b, 0x72, 0x6a, 0xc9, 0xde, 0x41, 0x5b, 0x49, 0xa4, 0x10, 0xd3, 0xfe, 0x24, 0xc4,
+	0xd8, 0xb3, 0x48, 0xe7, 0xad, 0xea, 0x02, 0x21, 0xa6, 0xa7, 0x21, 0x2a, 0xad, 0xea, 0x2f, 0x09,
+	0x35, 0x50, 0x34, 0x40, 0x5b, 0x85, 0x40, 0x31, 0x03, 0x14, 0x33, 0x40, 0x31, 0x01, 0x6a, 0x17,
+	0x02, 0xc5, 0x2c, 0x50, 0xcc, 0x02, 0x45, 0x0d, 0x14, 0x0a, 0x1d, 0x62, 0x0a, 0x14, 0x53, 0xa0,
+	0xb8, 0x04, 0xea, 0x14, 0x02, 0xc5, 0x1c, 0x50, 0xcc, 0x01, 0x45, 0x0d, 0x74, 0xbd, 0xb8, 0x5c,
+	0x0a, 0x14, 0x53, 0xa0, 0x98, 0x01, 0xda, 0x2e, 0x04, 0x8a, 0x79, 0xa0, 0xcb, 0x90, 0xbd, 0x05,
+	0x27, 0x12, 0x71, 0x78, 0xb5, 0xd0, 0x26, 0x3b, 0xa4, 0x7e, 0x90, 0x53, 0x7f, 0xa1, 0x73, 0x65,
+	0xee, 0x0c, 0xc7, 0xaa, 0xe3, 0x68, 0xb9, 0xc1, 0x3e, 0x41, 0xc7, 0xc8, 0x13, 0xc3, 0xff, 0xd0,
+	0x0d, 0x8f, 0x0a, 0x6e, 0x30, 0x2e, 0xf5, 0x25, 0xed, 0x28, 0xbb, 0x97, 0x69, 0x83, 0xcc, 0xbb,
+	0xa5, 0x6d, 0x28, 0xd3, 0xb9, 0x36, 0x88, 0x42, 0x17, 0x1a, 0x5c, 0x4a, 0x21, 0xbd, 0x1b, 0xab,
+	0xe0, 0x9d, 0xf8, 0xa8, 0x8e, 0xb4, 0x48, 0xa7, 0x7d, 0xb0, 0xc1, 0x9a, 0x0d, 0x16, 0x13, 0x31,
+	0x18, 0xf9, 0x3e, 0xb4, 0x92, 0x21, 0x64, 0x9b, 0xd0, 0x9c, 0x23, 0x97, 0x27, 0x3d, 0x9a, 0xeb,
+	0x5a, 0x60, 0x22, 0xff, 0x29, 0xd8, 0xcb, 0x89, 0x2b, 0x4d, 0x7a, 0x05, 0x96, 0x99, 0xaf, 0xb2,
+	0x14, 0xb5, 0xaf, 0x1e, 0xd4, 0x49, 0x8f, 0xbe, 0x05, 0xb5, 0xc0, 0x44, 0xfe, 0x33, 0x80, 0x74,
+	0xc8, 0x4a, 0x0b, 0x3c, 0xa1, 0x02, 0xe4, 0xb7, 0x2c, 0x65, 0x1b, 0x9c, 0xcc, 0xf0, 0x94, 0xa6,
+	0x1d, 0x28, 0xcf, 0x78, 0xab, 0x67, 0xea, 0x95, 0xe3, 0x7c, 0x12, 0x53, 0xaf, 0x8d, 0xc0, 0x44,
+	0xfe, 0x6b, 0xc5, 0x02, 0x6f, 0x67, 0x51, 0x6a, 0xf4, 0x5c, 0x59, 0xc0, 0xbf, 0x61, 0xc4, 0x3c,
+	0xb0, 0xa6, 0x7c, 0x7a, 0xc9, 0x25, 0x7a, 0xb5, 0xad, 0xda, 0x4e, 0x2d, 0x48, 0x42, 0xff, 0x8d,
+	0xa2, 0x87, 0x77, 0xd0, 0x2b, 0xf5, 0x73, 0x48, 0x2d, 0xdd, 0x46, 0x95, 0x3d, 0x04, 0x3b, 0xc4,
+	0xf3, 0xf9, 0x70, 0xc8, 0x11, 0x8d, 0x3a, 0xdd, 0xf0, 0x0f, 0x15, 0x73, 0xbc, 0x8b, 0xb9, 0xea,
+	0x5f, 0x3b, 0x51, 0x57, 0x50, 0xff, 0x26, 0xf4, 0x0f, 0xa1, 0x9d, 0x1b, 0xb1, 0x7b, 0x53, 0xdd,
+	0x05, 0x77, 0x75, 0xc2, 0x4a, 0x1f, 0xfd, 0xb2, 0x98, 0x19, 0xa4, 0x7b, 0x17, 0xeb, 0x41, 0x2b,
+	0x99, 0x27, 0xe5, 0x89, 0x4b, 0x79, 0x24, 0x46, 0xfa, 0x47, 0xd8, 0x08, 0x92, 0x90, 0x3d, 0x06,
+	0xe0, 0x52, 0x9a, 0xbf, 0x25, 0xdd, 0x60, 0x07, 0x99, 0x9d, 0xdd, 0x5f, 0x55, 0xa8, 0xab, 0xff,
+	0x24, 0x6b, 0x83, 0x7d, 0x11, 0x8d, 0xf8, 0x55, 0x18, 0xf1, 0x91, 0x5b, 0x61, 0x36, 0x34, 0xe8,
+	0xb5, 0x74, 0xab, 0x0c, 0xa0, 0xa9, 0xdf, 0x32, 0x77, 0x8d, 0xb5, 0xa0, 0xae, 0xe0, 0xb8, 0x35,
+	0xc6, 0xa0, 0xd3, 0xd3, 0xd9, 0xc6, 0xac, 0x5b, 0x57, 0xa7, 0xca, 0x8d, 0xdb, 0x60, 0xeb, 0xd0,
+	0x4a, 0x1e, 0x84, 0xdb, 0x64, 0x1d, 0x80, 0x14, 0xac, 0x3b, 0x62, 0x1b, 0x89, 0xf7, 0x44, 0xca,
+	0xd3, 0x14, 0xba, 0xe0, 0x8a, 0x01, 0x34, 0xc8, 0x9d, 0x7b, 0x63, 0xed, 0x7a, 0x60, 0xd3, 0x9a,
+	0xfa, 0x74, 0xc0, 0xba, 0x88, 0x7e, 0x44, 0xe2, 0x67, 0xe4, 0x56, 0x2e, 0x9b, 0xf4, 0x69, 0x79,
+	0xfe, 0x27, 0x00, 0x00, 0xff, 0xff, 0x6b, 0x49, 0x39, 0x57, 0x2e, 0x08, 0x00, 0x00,
 }
