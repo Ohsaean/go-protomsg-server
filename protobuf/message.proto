@@ -97,7 +97,7 @@ message ResQuit {
 }
 message ResRoomList {
 	int64 userID = 1;
-	int64 roomIDs = 2;
+	repeated int64 roomIDs = 2;
 }
 
 

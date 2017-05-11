@@ -23,34 +23,31 @@ func NewUser(uid int64, room *Room) *User {
 }
 
 func (u *User) Leave() {
-	notifyMsg := new(gs_protocol.NotifyQuitMsg)
-	if DEBUG {
-		lib.Log("Leave user id : ", lib.Itoa64(u.userID))
-	}
-	notifyMsg.UserID = proto.Int64(u.userID)
 
-	if u.room != nil {
-		if DEBUG {
-			lib.Log("Leave room id : ", lib.Itoa64(u.room.roomID))
-		}
-		notifyMsg.RoomID = proto.Int64(u.room.roomID)
+	lib.Log("Leave user id : ", lib.Itoa64(u.userID))
 
-		msg, err := proto.Marshal(notifyMsg)
-		lib.CheckError(err)
-
-		// race condition by broadcast goroutine and onClientWrite goroutine
-		u.room.Leave(u.userID)
-
-		// notify all members in the room
-		u.SendToAll(NewMessage(u.userID, gs_protocol.Type_NotifyQuit, msg))
-		if DEBUG {
-			lib.Log("NotifyQuit message send")
-		}
+	if u.room == nil {
+		lib.Log("Error, room is nil")
+		return
 	}
 
-	if DEBUG {
-		lib.Log("Leave func end")
+	lib.Log("Leave room id : ", lib.Itoa64(u.room.roomID))
+
+	// broadcast message
+	notifyMsg := &gs_protocol.Message{
+		Type: gs_protocol.Type_NotifyQuit,
+		NotifyQuit: &gs_protocol.NotifyQuitMsg{
+			UserID: u.userID,
+			RoomID: u.room.roomID,
+		},
 	}
+	msg, err := proto.Marshal(notifyMsg)
+	lib.CheckError(err)
+	u.SendToAll(NewMessage(u.userID, msg))
+
+	lib.Log("NotifyQuit message send")
+
+	lib.Log("Leave func end")
 }
 
 func (u *User) Push(m *Message) {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/golang/protobuf/proto"
 	"github.com/ohsaean/gogpd/lib"
 	"github.com/ohsaean/gogpd/protobuf"
 	"math"
@@ -21,23 +22,21 @@ var (
 )
 
 type Message struct {
-	userID    int64 // sender
-	msgType   gs_protocol.Type
+	userID    int64  // sender
 	timestamp int    // send time
 	contents  []byte // serialized google protocol-buffer message
 }
 
-func NewMessage(userID int64, eventType gs_protocol.Type, msg []byte) *Message {
+func NewMessage(userID int64, msg []byte) *Message {
 	return &Message{
 		userID,
-		eventType,
 		int(time.Now().Unix()),
 		msg,
 	}
 }
 
 func InitRooms() {
-	rooms = lib.NewSMap(lib.Channel)
+	rooms = lib.NewSMap(lib.RWMutex)
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -54,15 +53,10 @@ func onClientWrite(user *User, c net.Conn) {
 			}
 			return
 		case m := <-user.recv:
-			// on receive message
-			msgTypeBytes := lib.WriteMsgType(m.msgType)
-
-			// msg header + msg type
-			msg := append(msgTypeBytes, m.contents...) // '...' need when concat between slice+slice
 			if DEBUG {
 				lib.Log("Client recv, user id : " + lib.Itoa64(user.userID))
 			}
-			_, err := c.Write(msg) // send data to client
+			_, err := c.Write(m.contents) // send data to client
 			if err != nil {
 				if DEBUG {
 					lib.Log(err)
@@ -80,7 +74,7 @@ func onClientRead(user *User, c net.Conn) {
 	c.SetReadDeadline(time.Now().Add(1 * time.Second))
 	defer c.Close() // reserve tcp connection close
 	for {
-		n, err := c.Read(data)
+		_, err := c.Read(data)
 		if err != nil {
 
 			lib.Log("Fail Stream read, err : ", err)
@@ -88,15 +82,20 @@ func onClientRead(user *User, c net.Conn) {
 		}
 
 		// header - body format (header + body in single line)
-		messageType := gs_protocol.Type(lib.ReadInt32(data[0:4]))
+		message := &gs_protocol.Message{}
+		err = proto.Unmarshal(data, message)
+		if err != nil {
+			lib.CheckError(err)
+		}
+
+		messageType := message.Type
 
 		lib.Log("Decoding type : ", messageType)
 
-		rawData := data[4:n] // 4~ end of line <--if fail read rawData, need calculated body size data (field)
 		handler, ok := msgHandler[messageType]
 
 		if ok {
-			handler(user, rawData) // calling proper handler function
+			handler(user, message) // calling proper handler function
 		} else {
 
 			lib.Log("Fail no function defined for type", messageType)

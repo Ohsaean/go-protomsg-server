@@ -336,8 +336,8 @@ func (m *ResQuit) String() string { return proto.CompactTextString(m) }
 func (*ResQuit) ProtoMessage()    {}
 
 type ResRoomList struct {
-	UserID  int64 `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
-	RoomIDs int64 `protobuf:"varint,2,opt,name=roomIDs" json:"roomIDs,omitempty"`
+	UserID  int64   `protobuf:"varint,1,opt,name=userID" json:"userID,omitempty"`
+	RoomIDs []int64 `protobuf:"varint,2,rep,name=roomIDs" json:"roomIDs,omitempty"`
 }
 
 func (m *ResRoomList) Reset()         { *m = ResRoomList{} }

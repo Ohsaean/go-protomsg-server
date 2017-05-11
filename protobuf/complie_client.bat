@@ -1,0 +1,1 @@
+go build -ldflags="-H windowsgui" github.com/ohsaean/gogpd/client
