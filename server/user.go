@@ -35,10 +35,11 @@ func (u *User) Leave() {
 
 	// broadcast message
 	notifyMsg := &gs_protocol.Message{
-		Type: gs_protocol.Type_NotifyQuit,
-		NotifyQuit: &gs_protocol.NotifyQuitMsg{
-			UserID: u.userID,
-			RoomID: u.room.roomID,
+		Payload: &gs_protocol.Message_NotifyQuit{
+			NotifyQuit: &gs_protocol.NotifyQuitMsg{
+				UserID: u.userID,
+				RoomID: u.room.roomID,
+			},
 		},
 	}
 	msg, err := proto.Marshal(notifyMsg)

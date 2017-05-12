@@ -48,19 +48,19 @@ func onClientWrite(user *User, c net.Conn) {
 		select {
 		case <-user.exit:
 			// when receive signal then finish the program
-			if DEBUG {
-				lib.Log("Leave user id :" + lib.Itoa64(user.userID))
-			}
+
+			lib.Log("Leave user id :" + lib.Itoa64(user.userID))
+
 			return
 		case m := <-user.recv:
-			if DEBUG {
-				lib.Log("Client recv, user id : " + lib.Itoa64(user.userID))
-			}
+
+			lib.Log("Client recv, user id : " + lib.Itoa64(user.userID))
+
 			_, err := c.Write(m.contents) // send data to client
 			if err != nil {
-				if DEBUG {
-					lib.Log(err)
-				}
+
+				lib.Log(err)
+
 				return
 			}
 		}
@@ -71,7 +71,7 @@ func onClientRead(user *User, c net.Conn) {
 
 	data := make([]byte, 4096) // 4096 byte slice (dynamic resize)
 
-	c.SetReadDeadline(time.Now().Add(1 * time.Second))
+	c.SetReadDeadline(time.Now().Add(30 * time.Second))
 	defer c.Close() // reserve tcp connection close
 	for {
 		_, err := c.Read(data)
@@ -81,27 +81,13 @@ func onClientRead(user *User, c net.Conn) {
 			break
 		}
 
-		// header - body format (header + body in single line)
 		message := &gs_protocol.Message{}
 		err = proto.Unmarshal(data, message)
 		if err != nil {
 			lib.CheckError(err)
 		}
 
-		messageType := message.Type
-
-		lib.Log("Decoding type : ", messageType)
-
-		handler, ok := msgHandler[messageType]
-
-		if ok {
-			handler(user, message) // calling proper handler function
-		} else {
-
-			lib.Log("Fail no function defined for type", messageType)
-
-			break
-		}
+		messageHandler(user, message)
 	}
 
 	// fail read
@@ -109,9 +95,8 @@ func onClientRead(user *User, c net.Conn) {
 }
 
 func onConnect(c net.Conn) {
-	if DEBUG {
-		lib.Log("New connection: ", c.RemoteAddr())
-	}
+
+	lib.Log("New connection: ", c.RemoteAddr())
 
 	user := NewUser(0, nil) // empty user data
 
@@ -125,9 +110,7 @@ func main() {
 	ln, err := net.Listen("tcp", ":8000") // using TCP protocol over 8000 port
 	defer ln.Close()                      // reserve listen wait close
 	if err != nil {
-		if DEBUG {
-			lib.Log(err)
-		}
+		lib.Log(err)
 		return
 	}
 

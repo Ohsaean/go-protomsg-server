@@ -6,18 +6,35 @@ import (
 	"github.com/ohsaean/gogpd/protobuf"
 )
 
-type MsgHandlerFunc func(user *User, data *gs_protocol.Message)
+// MessageHandler 여기서 각 proto message 에 대한 적절한 프로시저를 할당함
+func messageHandler(user *User, msg *gs_protocol.Message) {
+	// type switch 말고는 방법이 없나??
+	switch msg.Payload.(type) {
 
-var msgHandler = map[gs_protocol.Type]MsgHandlerFunc{
-	gs_protocol.Type_Login:          LoginHandler,
-	gs_protocol.Type_Create:         CreateHandler,
-	gs_protocol.Type_Join:           JoinHandler,
-	gs_protocol.Type_DefinedAction1: Action1Handler,
-	gs_protocol.Type_Quit:           QuitHandler,
-	gs_protocol.Type_RoomList:       RoomListHandler,
+	case *gs_protocol.Message_ReqLogin:
+		loginHandler(user, msg)
+
+	case *gs_protocol.Message_ReqCreate:
+		createHandler(user, msg)
+
+	case *gs_protocol.Message_ReqJoin:
+		joinHandler(user, msg)
+
+	case *gs_protocol.Message_ReqAction1:
+		action1Handler(user, msg)
+
+	case *gs_protocol.Message_ReqRoomList:
+		roomListHandler(user, msg)
+
+	case *gs_protocol.Message_ReqQuit:
+		quitHandler(user, msg)
+
+	default:
+		lib.Log("Error, not defined handler")
+	}
 }
 
-func LoginHandler(user *User, data *gs_protocol.Message) {
+func loginHandler(user *User, data *gs_protocol.Message) {
 
 	req := data.GetReqLogin()
 	if req == nil {
@@ -29,7 +46,6 @@ func LoginHandler(user *User, data *gs_protocol.Message) {
 
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Type: gs_protocol.Type_Login,
 		Payload: &gs_protocol.Message_ReqLogin{
 			ReqLogin: &gs_protocol.ReqLogin{
 				UserID: user.userID,
@@ -42,7 +58,7 @@ func LoginHandler(user *User, data *gs_protocol.Message) {
 	user.recv <- NewMessage(user.userID, msg)
 }
 
-func CreateHandler(user *User, data *gs_protocol.Message) {
+func createHandler(user *User, data *gs_protocol.Message) {
 
 	req := data.GetReqCreate()
 	if req == nil {
@@ -50,9 +66,7 @@ func CreateHandler(user *User, data *gs_protocol.Message) {
 	}
 
 	if user.userID != req.UserID {
-		if DEBUG {
-			lib.Log("Fail room create, user id missmatch")
-		}
+		lib.Log("Fail room create, user id missmatch")
 		return
 	}
 
@@ -62,27 +76,27 @@ func CreateHandler(user *User, data *gs_protocol.Message) {
 	r.users.Set(user.userID, user) // insert user
 	user.room = r                  // set room
 	rooms.Set(roomID, r)           // set room into global shared map
-	if DEBUG {
 		lib.Log("Get rand room id : ", lib.Itoa64(roomID))
-	}
+
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Type: gs_protocol.Type_Create,
-		ResCreate: &gs_protocol.ResCreate{
-			RoomID: roomID,
-			UserID: user.userID,
+		Payload: &gs_protocol.Message_ResCreate{
+			ResCreate: &gs_protocol.ResCreate{
+				RoomID: roomID,
+				UserID: user.userID,
+			},
 		},
 	}
 
-	if DEBUG {
+
 		lib.Log("Room create, room id : ", lib.Itoa64(roomID))
-	}
+
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
 	user.Push(NewMessage(user.userID, msg))
 }
 
-func JoinHandler(user *User, data *gs_protocol.Message) {
+func joinHandler(user *User, data *gs_protocol.Message) {
 
 	// request body unmarshaling
 	req := data.GetReqJoin()
@@ -95,9 +109,9 @@ func JoinHandler(user *User, data *gs_protocol.Message) {
 	value, ok := rooms.Get(roomID)
 
 	if !ok {
-		if DEBUG {
+
 			lib.Log("Fail room join, room does not exist, room id : ", lib.Itoa64(roomID))
-		}
+
 		return
 	}
 
@@ -107,10 +121,11 @@ func JoinHandler(user *User, data *gs_protocol.Message) {
 
 	// broadcast message
 	notifyMsg := &gs_protocol.Message{
-		Type: gs_protocol.Type_NotifyJoin,
-		NotifyJoin: &gs_protocol.NotifyJoinMsg{
-			RoomID: roomID,
-			UserID: user.userID,
+		Payload: &gs_protocol.Message_ReqJoin{
+			ReqJoin: &gs_protocol.ReqJoin{
+				UserID: 1,
+				RoomID: roomID,
+			},
 		},
 	}
 	msg, err := proto.Marshal(notifyMsg)
@@ -120,10 +135,11 @@ func JoinHandler(user *User, data *gs_protocol.Message) {
 
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Type: gs_protocol.Type_Join,
-		ResJoin: &gs_protocol.ResJoin{
-			RoomID: roomID,
-			UserID: user.userID,
+		Payload: &gs_protocol.Message_ResJoin{
+			ResJoin: &gs_protocol.ResJoin{
+				RoomID: roomID,
+				UserID: user.userID,
+			},
 		},
 	}
 
@@ -132,7 +148,7 @@ func JoinHandler(user *User, data *gs_protocol.Message) {
 	user.Push(NewMessage(user.userID, msg))
 }
 
-func Action1Handler(user *User, data *gs_protocol.Message) {
+func action1Handler(user *User, data *gs_protocol.Message) {
 
 	// request body unmarshaling
 	req := data.GetReqAction1()
@@ -146,9 +162,10 @@ func Action1Handler(user *User, data *gs_protocol.Message) {
 
 	// broadcast message
 	notifyMsg := &gs_protocol.Message{
-		Type: gs_protocol.Type_NotifyAction1,
-		NotifyAction1: &gs_protocol.NotifyAction1Msg{
-			UserID: user.userID,
+		Payload: &gs_protocol.Message_NotifyAction1{
+			NotifyAction1: &gs_protocol.NotifyAction1Msg{
+				UserID: user.userID,
+			},
 		},
 	}
 	msg, err := proto.Marshal(notifyMsg)
@@ -158,9 +175,10 @@ func Action1Handler(user *User, data *gs_protocol.Message) {
 
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Type: gs_protocol.Type_NotifyAction1,
-		ResAction1: &gs_protocol.ResAction1{
-			UserID: user.userID,
+		Payload: &gs_protocol.Message_ResAction1{
+			ResAction1: &gs_protocol.ResAction1{
+				UserID: user.userID,
+			},
 		},
 	}
 
@@ -169,7 +187,7 @@ func Action1Handler(user *User, data *gs_protocol.Message) {
 	user.Push(NewMessage(user.userID, msg))
 }
 
-func QuitHandler(user *User, data *gs_protocol.Message) {
+func quitHandler(user *User, data *gs_protocol.Message) {
 
 	// request body unmarshaling
 	req := data.GetReqQuit()
@@ -179,10 +197,11 @@ func QuitHandler(user *User, data *gs_protocol.Message) {
 
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Type: gs_protocol.Type_Quit,
-		ResQuit: &gs_protocol.ResQuit{
-			UserID:    user.userID,
-			IsSuccess: 1,
+		Payload: &gs_protocol.Message_ResQuit{
+			ResQuit: &gs_protocol.ResQuit{
+				UserID:    user.userID,
+				IsSuccess: 1,
+			},
 		},
 	}
 	msg, err := proto.Marshal(res)
@@ -193,7 +212,7 @@ func QuitHandler(user *User, data *gs_protocol.Message) {
 	user.exit <- struct{}{}
 }
 
-func RoomListHandler(user *User, data *gs_protocol.Message) {
+func roomListHandler(user *User, data *gs_protocol.Message) {
 	// request body unmarshaling
 	req := data.GetReqRoomList()
 	if req == nil {
@@ -202,10 +221,11 @@ func RoomListHandler(user *User, data *gs_protocol.Message) {
 
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Type: gs_protocol.Type_RoomList,
-		ResRoomList: &gs_protocol.ResRoomList{
-			UserID:  user.userID,
-			RoomIDs: rooms.GetKeys(),
+		Payload: &gs_protocol.Message_ResRoomList{
+			ResRoomList: &gs_protocol.ResRoomList{
+				UserID:  user.userID,
+				RoomIDs: rooms.GetKeys(),
+			},
 		},
 	}
 	msg, err := proto.Marshal(res)
