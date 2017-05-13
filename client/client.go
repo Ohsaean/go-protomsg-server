@@ -1,317 +1,518 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"github.com/golang/protobuf/proto"
+	"github.com/lxn/walk"
+	walk_dcl "github.com/lxn/walk/declarative"
 	"github.com/ohsaean/gogpd/lib"
 	"github.com/ohsaean/gogpd/protobuf"
+	"log"
 	"net"
+	"os"
+	"strconv"
 )
 
-type MsgHandlerFunc func(data []byte)
-
-var msgHandlerMapping = map[gs_protocol.Type]MsgHandlerFunc{
-	gs_protocol.Type_Login:          ResLogin,
-	gs_protocol.Type_Create:         ResCreate,
-	gs_protocol.Type_Join:           ResJoin,
-	gs_protocol.Type_DefinedAction1: ResAction1,
-	gs_protocol.Type_Quit:           ResQuit,
-	gs_protocol.Type_NotifyJoin:     NotifyJoinHandler,
-	gs_protocol.Type_NotifyAction1:  NotifyAction1Handler,
-	gs_protocol.Type_NotifyQuit:     NotifyQuitHandler,
-	gs_protocol.Type_RoomList:       ResRoomList,
-}
-
-//var buffer bytes.Buffer
-//for i := 0; i < b.N; i++ {
-//buffer.WriteString(s2)
-//}
-//s1 := buffer.String()
-
-var user_buffer bytes.Buffer
-var recv_buffer bytes.Buffer
+var inputString string
 
 func main() {
 	client, err := net.Dial("tcp", "127.0.0.1:8000")
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 	defer client.Close()
 
 	data := make([]byte, 4096)
-	exit := make(chan struct{})
+	//exit := make(chan bool, 1)
 
 	var userID int64
-	var method int
-	AddUserBuffer("=================================================================\n")
-	AddUserBuffer(" Input user ID (it must be a whole number greater than 0\n")
-	AddUserBuffer("=================================================================\n")
-	AddUserBuffer("userID : ")
-	fmt.Scanln(&userID)
+	var mw *walk.MainWindow
 
-	ReqLogin(client, userID, data)
+	err = walk_dcl.MainWindow{
+		AssignTo: &mw,
+		Title:    "Walk LogView Example",
+		MinSize: walk_dcl.Size{
+			Width:  320,
+			Height: 240,
+		},
+		Size: walk_dcl.Size{
+			Width:  600,
+			Height: 400,
+		},
+		Layout: walk_dcl.VBox{},
+		Children: []walk_dcl.Widget{
+			walk_dcl.HSplitter{
+				Children: []walk_dcl.Widget{
+					walk_dcl.PushButton{
+						Text: "login",
+						OnClicked: func() {
+							if cmd, err := RunUserIdDialog(mw); err != nil {
+								log.Print(err)
+							} else if cmd == walk.DlgCmdOK {
+								log.Println("dlg msg : " + inputString)
+								num, err := strconv.Atoi(inputString)
+								lib.CheckError(err)
+								userID = int64(num)
+								ReqLogin(client, userID, data)
+							}
+						},
+					},
+					walk_dcl.PushButton{
+						Text: "room create",
+						OnClicked: func() {
+							log.Println("req create user id : ", userID)
+							ReqCreate(client, userID, data)
+						},
+					},
+					walk_dcl.PushButton{
+						Text: "room list",
+						OnClicked: func() {
+							log.Println("room list user id : ", userID)
+							ReqRoomList(client, userID, data)
+						},
+					},
+					walk_dcl.PushButton{
+						Text: "join",
+						OnClicked: func() {
+							if cmd, err := RunRoomJoinDialog(mw); err != nil {
+								log.Print(err)
+							} else if cmd == walk.DlgCmdOK {
+								log.Println("dlg msg : " + inputString)
+								num, err := strconv.Atoi(inputString)
+								lib.CheckError(err)
+								roomID := int64(num)
+								ReqJoin(client, userID, data, roomID)
+							}
+						},
+					},
+					walk_dcl.PushButton{
+						Text: "action1",
+						OnClicked: func() {
+							ReqAction1(client, userID, data)
+						},
+					},
+					walk_dcl.PushButton{
+						Text: "quit",
+						OnClicked: func() {
+							log.Println("quit user id : ", userID)
+							ReqQuit(client, userID, data)
+							os.Exit(3)
+						},
+					},
+				},
+			},
+		},
+	}.Create()
 
-	go func() {
-		for {
-			AddUserBuffer("=================================================================\n")
-			AddUserBuffer(" Input command number (1~5)\n")
-			AddUserBuffer("=================================================================\n")
-			AddUserBuffer("1. room list\n")
-			AddUserBuffer("2. room create\n")
-			AddUserBuffer("3. join\n")
-			AddUserBuffer("4. action1\n")
-			AddUserBuffer("5. quit\n")
-			AddUserBuffer("choose number: ")
-			fmt.Scanln(&method)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-			switch method {
-			case 1:
-				ReqRoomList(client, userID, data)
-			case 2:
-				ReqCreate(client, userID, data)
-			case 3:
-				var roomID int64
-				fmt.Print("input room id : ")
-				fmt.Scanln(&roomID)
-				ReqJoin(client, userID, data, roomID)
-			case 4:
-				ReqAction1(client, userID, data)
-			case 5:
-				ReqQuit(client, userID, data)
-				fmt.Println("program exit..bye")
-				exit <- struct{}{}
-				return
-			default:
-				continue
-			}
-		}
-	}()
+	lv, err := NewLogView(mw)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	//logFile, err := os.OpenFile("log.txt", os.O_WRONLY, 0666)
+	log.SetOutput(lv)
 
 	go func() {
 		data := make([]byte, 4096)
 
 		for {
-			n, err := client.Read(data)
+			log.Println("wait for read")
+			_, err := client.Read(data)
 			if err != nil {
-				lib.Log("Fail Stream read, err : ", err)
+				log.Println("Fail Stream read, err : ", err)
 				break
 			}
 
-			messageType := gs_protocol.Type(lib.ReadInt32(data[0:4]))
-			lib.Log("Decoding type : ", messageType)
-
-			rawData := data[4:n]
-			handler, ok := msgHandlerMapping[messageType]
-
-			if ok {
-				handler(rawData)
-			} else {
-				lib.Log("Fail no function defined for type", handler)
-				break
+			message := &gs_protocol.Message{}
+			err = proto.Unmarshal(data, message)
+			if err != nil {
+				lib.CheckError(err)
 			}
+			messageHandler(message)
 		}
 	}()
 
-	<-exit
+	mw.Run()
 }
 
-func AddUserBuffer(str string) {
-	recv_buffer.WriteString(str)
-}
+// MessageHandler 여기서 각 proto message 에 대한 적절한 프로시저를 할당함
+func messageHandler(msg *gs_protocol.Message) {
+	// type switch 말고는 방법이 없나??
+	switch msg.Payload.(type) {
 
-func AddUserBufferJson(str string, v interface{}) {
-	clientSend, err := json.Marshal(v)
-	lib.CheckError(err)
-	user_buffer.WriteString(str + string(clientSend))
-}
+	case *gs_protocol.Message_ResLogin:
+		ResLogin(msg)
 
-func AddRecvBuffer(str string) {
-	recv_buffer.WriteString(str)
+	case *gs_protocol.Message_ResCreate:
+		ResCreate(msg)
+
+	case *gs_protocol.Message_ResJoin:
+		ResJoin(msg)
+
+	case *gs_protocol.Message_ResAction1:
+		ResAction1(msg)
+
+	case *gs_protocol.Message_ResRoomList:
+		ResRoomList(msg)
+
+	case *gs_protocol.Message_ResQuit:
+		ResQuit(msg)
+
+	case *gs_protocol.Message_NotifyAction1:
+		NotifyAction1Handler(msg)
+
+	case *gs_protocol.Message_NotifyJoin:
+		NotifyJoinHandler(msg)
+
+	case *gs_protocol.Message_NotifyQuit:
+		NotifyQuitHandler(msg)
+
+	default:
+		lib.Log("Error, not defined handler")
+	}
 }
 
 func ReqLogin(c net.Conn, userUID int64, data []byte) {
-	req := new(gs_protocol.ReqLogin)
-	req.UserID = proto.Int64(userUID)
-
-	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Login)
+	req := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqLogin{
+			ReqLogin: &gs_protocol.ReqLogin{
+				UserID: userUID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	data = append(msgTypeBytes, msg...)
-
-	_, err = c.Write(data)
+	_, err = c.Write(msg)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
-	AddUserBufferJson("client send ", req)
+	log.Println("ReqLogin client send :", req)
 }
 
-func ResLogin(rawData []byte) {
+func ResLogin(data *gs_protocol.Message) bool {
+	res := data.GetResLogin()
+	if res == nil {
+		lib.Log("fail, GetReqLogin()")
+		return false
+	} else {
+		lib.Log("GetReqLogin() : ", res)
+	}
 
-	res := new(gs_protocol.ResLogin)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
-
-	AddRecvBuffer("ResLogin server return : user id " + res.GetUserID())
-	AddRecvBuffer("ResLogin server return : result id " + res.GetResult())
+	log.Println("ResLogin server return : user id : " + lib.Itoa64(res.UserID))
+	log.Println("ResLogin server return : result code : " + lib.Itoa32(res.Result))
+	return true
 }
 
 func ReqRoomList(c net.Conn, userUID int64, data []byte) {
-	req := new(gs_protocol.ReqRoomList)
-	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_RoomList)
+	req := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqRoomList{
+			ReqRoomList: &gs_protocol.ReqRoomList{
+				UserID: userUID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	data = append(msgTypeBytes, msg...)
-
-	_, err = c.Write(data)
+	_, err = c.Write(msg)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
-	AddUserBufferJson("client send ", req)
+	log.Println("ReqRoomList client send :", req)
 }
 
-func ResRoomList(rawData []byte) {
+func ResRoomList(data *gs_protocol.Message) bool {
 
-	res := new(gs_protocol.ResRoomList)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
+	res := data.GetResRoomList()
+	if res == nil {
+		lib.Log("fail, GetResRoomList()")
+		return false
+	}
 
-	AddRecvBuffer("ResRoomList server return : members " + lib.Int64SliceToString(res.GetRoomIDs()))
+	log.Println("GetResRoomList server return : user id : ", res.UserID)
+
+	for _, roomID := range res.RoomIDs {
+		log.Println("GetResRoomList server return : room id : ", roomID)
+	}
+
+	return true
 }
 
 func ReqCreate(c net.Conn, userUID int64, data []byte) {
-	req := new(gs_protocol.ReqCreate)
-	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Create)
+	req := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqCreate{
+			ReqCreate: &gs_protocol.ReqCreate{
+				UserID: userUID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	data = append(msgTypeBytes, msg...)
-
-	_, err = c.Write(data)
+	_, err = c.Write(msg)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
-	AddUserBufferJson("client send ", req)
+	log.Println("ReqCreate client send :", req)
 }
 
-func ResCreate(rawData []byte) {
+func ResCreate(data *gs_protocol.Message) bool {
 
-	res := new(gs_protocol.ResCreate)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
+	res := data.GetResCreate()
+	if res == nil {
+		lib.Log("fail, GetReqLogin()")
+		return false
+	}
 
-	AddRecvBuffer("ResCreate server return : user id " + res.GetUserID())
-	AddRecvBuffer("ResCreate server return : room id " + res.GetRoomID())
+	log.Println("ResCreate server return : user id : ", res.UserID)
+	log.Println("ResCreate server return : room id : ", res.RoomID)
+
+	return true
 }
 
 func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
-	req := new(gs_protocol.ReqJoin)
-	req.UserID = proto.Int64(userUID)
-	req.RoomID = proto.Int64(roomID)
-	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Join)
+	req := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqJoin{
+			ReqJoin: &gs_protocol.ReqJoin{
+				UserID: userUID,
+				RoomID: roomID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	data = append(msgTypeBytes, msg...)
-
-	_, err = c.Write(data)
+	_, err = c.Write(msg)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
-	AddUserBufferJson("client send ", req)
+	log.Println("ReqJoin client send :", req)
 }
 
-func ResJoin(rawData []byte) {
+func ResJoin(data *gs_protocol.Message) bool {
 
-	res := new(gs_protocol.ResJoin)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
+	res := data.GetResJoin()
+	if res == nil {
+		lib.Log("fail, GetReqLogin()")
+		return false
+	}
 
-	AddRecvBuffer("ResJoin server return : user id " + res.GetUserID())
-	AddRecvBuffer("ResJoin server return : room id " + res.GetRoomID())
-	AddRecvBuffer("ResJoin server return : members " + lib.Int64SliceToString(res.GetMembers()))
+	log.Println("GetResJoin server return : user id : ", res.UserID)
+	log.Println("GetResJoin server return : room id : ", res.RoomID)
+
+	for _, memberID := range res.Members {
+		log.Println("GetResJoin server return : member id : ", memberID)
+	}
+
+	return true
 }
 
 func ReqAction1(c net.Conn, userUID int64, data []byte) {
-	req := new(gs_protocol.ReqAction1)
-	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_DefinedAction1)
+	req := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqAction1{
+			ReqAction1: &gs_protocol.ReqAction1{
+				UserID: userUID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data)
+	_, err = c.Write(msg)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
-	AddUserBufferJson("client send ", req)
+	log.Println("ReqAction1 client send :", req)
 }
 
-func ResAction1(rawData []byte) {
+func ResAction1(data *gs_protocol.Message) bool {
 
-	res := new(gs_protocol.ResAction1)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
+	res := data.GetResAction1()
+	if res == nil {
+		lib.Log("fail, GetResAction1()")
+		return false
+	}
 
-	AddRecvBuffer("ResAction1 server return : user id " + res.GetUserID())
-	AddRecvBuffer("ResAction1 server return : result " + res.GetResult())
+	log.Println("GetResAction1 server return : user id : ", res.UserID)
+	log.Println("GetResAction1 server return : result : ", res.Result)
+
+	return true
 }
 
 func ReqQuit(c net.Conn, userUID int64, data []byte) {
-	req := new(gs_protocol.ReqQuit)
-	req.UserID = proto.Int64(userUID)
-	msgTypeBytes := lib.WriteMsgType(gs_protocol.Type_Quit)
+	req := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqQuit{
+			ReqQuit: &gs_protocol.ReqQuit{
+				UserID: userUID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	data = append(msgTypeBytes, msg...)
 
-	_, err = c.Write(data)
+	_, err = c.Write(msg)
 	if err != nil {
-		fmt.Println(err)
+		log.Print(err)
 		return
 	}
 
-	AddUserBufferJson("client send ", req)
+	log.Println("ReqQuit client send :", req)
 }
 
-func ResQuit(rawData []byte) {
-	res := new(gs_protocol.ResQuit)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
-	AddRecvBuffer("ResQuit server return : is success? " + res.GetIsSuccess())
+func ResQuit(data *gs_protocol.Message) bool {
+	res := data.GetResQuit()
+	if res == nil {
+		lib.Log("fail, GetResAction1()")
+		return false
+	}
+
+	log.Println("GetResQuit server return : user id : ", res.IsSuccess)
+	return true
 }
 
-func NotifyJoinHandler(rawData []byte) {
-	res := new(gs_protocol.NotifyJoinMsg)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
+func NotifyJoinHandler(data *gs_protocol.Message) bool {
+	res := data.GetNotifyJoin()
+	if res == nil {
+		lib.Log("fail, GetResAction1()")
+		return false
+	}
 
-	AddRecvBuffer("NotifyJoin server return : user id " + res.GetUserID())
-	AddRecvBuffer("NotifyJoin server return : room id " + res.GetRoomID())
+	log.Println("GetNotifyJoin server return : user id : ", res.UserID)
+	log.Println("GetNotifyJoin server return : room id : ", res.RoomID)
+	return true
 }
 
-func NotifyAction1Handler(rawData []byte) {
-	res := new(gs_protocol.NotifyAction1Msg)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
-	AddRecvBuffer("NotifyAction1 server return : user id " + res.GetUserID())
+func NotifyAction1Handler(data *gs_protocol.Message) bool {
+	res := data.GetNotifyAction1()
+	if res == nil {
+		lib.Log("fail, GetResAction1()")
+		return false
+	}
+
+	log.Println("GetNotifyAction1 server return : user id : ", res.UserID)
+	return true
 }
 
-func NotifyQuitHandler(rawData []byte) {
-	res := new(gs_protocol.NotifyQuitMsg)
-	err := proto.Unmarshal(rawData, res)
-	lib.CheckError(err)
-	AddRecvBuffer("NotifyQuit server return : user id " + res.GetUserID())
+func NotifyQuitHandler(data *gs_protocol.Message) bool {
+	res := data.GetNotifyQuit()
+	if res == nil {
+		lib.Log("fail, GetResAction1()")
+		return false
+	}
+
+	log.Println("GetNotifyQuit server return : user id : ", res.UserID)
+	log.Println("GetNotifyQuit server return : room id : ", res.RoomID)
+	return true
+}
+
+func RunUserIdDialog(owner walk.Form) (int, error) {
+	var dlg *walk.Dialog
+	var acceptPB, cancelPB *walk.PushButton
+	var inDlg *walk.LineEdit
+
+	return walk_dcl.Dialog{
+		AssignTo:      &dlg,
+		Title:         "input User ID",
+		DefaultButton: &acceptPB,
+		CancelButton:  &cancelPB,
+		MinSize: walk_dcl.Size{
+			Width: 200, Height: 100},
+		Layout: walk_dcl.VBox{},
+		Children: []walk_dcl.Widget{
+			walk_dcl.Composite{
+				Layout: walk_dcl.Grid{Columns: 2},
+				Children: []walk_dcl.Widget{
+					walk_dcl.Label{
+						Text: "User ID:",
+					},
+					walk_dcl.LineEdit{
+						AssignTo: &inDlg,
+						Text:     "",
+					},
+				},
+			},
+			walk_dcl.Composite{
+				Layout: walk_dcl.HBox{},
+				Children: []walk_dcl.Widget{
+					walk_dcl.HSpacer{},
+					walk_dcl.PushButton{
+						AssignTo: &acceptPB,
+						Text:     "OK",
+						OnClicked: func() {
+							inputString = inDlg.Text()
+							dlg.Accept()
+						},
+					},
+					walk_dcl.PushButton{
+						AssignTo: &cancelPB,
+						Text:     "Cancel",
+						OnClicked: func() {
+							dlg.Cancel()
+						},
+					},
+				},
+			},
+		},
+	}.Run(owner)
+}
+
+func RunRoomJoinDialog(owner walk.Form) (int, error) {
+	var dlg *walk.Dialog
+	var acceptPB, cancelPB *walk.PushButton
+	var inDlg *walk.LineEdit
+
+	return walk_dcl.Dialog{
+		AssignTo:      &dlg,
+		Title:         "input Room ID",
+		DefaultButton: &acceptPB,
+		CancelButton:  &cancelPB,
+		MinSize:       walk_dcl.Size{Width: 200, Height: 100},
+		Layout:        walk_dcl.VBox{},
+		Children: []walk_dcl.Widget{
+			walk_dcl.Composite{
+				Layout: walk_dcl.Grid{Columns: 2},
+				Children: []walk_dcl.Widget{
+					walk_dcl.Label{
+						Text: "room id:",
+					},
+					walk_dcl.LineEdit{
+						AssignTo: &inDlg,
+						Text:     "",
+					},
+				},
+			},
+			walk_dcl.Composite{
+				Layout: walk_dcl.HBox{},
+				Children: []walk_dcl.Widget{
+					walk_dcl.HSpacer{},
+					walk_dcl.PushButton{
+						AssignTo: &acceptPB,
+						Text:     "OK",
+						OnClicked: func() {
+							inputString = inDlg.Text()
+							dlg.Accept()
+						},
+					},
+					walk_dcl.PushButton{
+						AssignTo: &cancelPB,
+						Text:     "Cancel",
+						OnClicked: func() {
+							dlg.Cancel()
+						},
+					},
+				},
+			},
+		},
+	}.Run(owner)
 }

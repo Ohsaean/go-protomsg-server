@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/golang/protobuf/proto"
 	"github.com/ohsaean/gogpd/lib"
 	"github.com/ohsaean/gogpd/protobuf"
 	"math"
@@ -17,27 +18,26 @@ const (
 
 // global variable
 var (
-	rooms lib.SharedMap
+	rooms   lib.SharedMap
+	gRoomID int64
 )
 
-type Message struct {
-	userID    int64 // sender
-	msgType   gs_protocol.Type
+type UserMessage struct {
+	userID    int64  // sender
 	timestamp int    // send time
 	contents  []byte // serialized google protocol-buffer message
 }
 
-func NewMessage(userID int64, eventType gs_protocol.Type, msg []byte) *Message {
-	return &Message{
+func NewMessage(userID int64, msg []byte) *UserMessage {
+	return &UserMessage{
 		userID,
-		eventType,
 		int(time.Now().Unix()),
 		msg,
 	}
 }
 
 func InitRooms() {
-	rooms = lib.NewSMap(lib.Channel)
+	rooms = lib.NewSMap(lib.RWMutex)
 	rand.Seed(time.Now().UTC().UnixNano())
 }
 
@@ -49,24 +49,19 @@ func onClientWrite(user *User, c net.Conn) {
 		select {
 		case <-user.exit:
 			// when receive signal then finish the program
-			if DEBUG {
-				lib.Log("Leave user id :" + lib.Itoa64(user.userID))
-			}
+
+			lib.Log("Leave user id :" + lib.Itoa64(user.userID))
+
 			return
 		case m := <-user.recv:
-			// on receive message
-			msgTypeBytes := lib.WriteMsgType(m.msgType)
 
-			// msg header + msg type
-			msg := append(msgTypeBytes, m.contents...) // '...' need when concat between slice+slice
-			if DEBUG {
-				lib.Log("Client recv, user id : " + lib.Itoa64(user.userID))
-			}
-			_, err := c.Write(msg) // send data to client
+			lib.Log("Client recv, user id : " + lib.Itoa64(user.userID))
+
+			_, err := c.Write(m.contents) // send data to client
 			if err != nil {
-				if DEBUG {
-					lib.Log(err)
-				}
+
+				lib.Log(err)
+
 				return
 			}
 		}
@@ -77,42 +72,35 @@ func onClientRead(user *User, c net.Conn) {
 
 	data := make([]byte, 4096) // 4096 byte slice (dynamic resize)
 
-	c.SetReadDeadline(time.Now().Add(1 * time.Second))
+	//c.SetReadDeadline(time.Now().Add(30 * time.Second))
 	defer c.Close() // reserve tcp connection close
 	for {
-		n, err := c.Read(data)
+		_, err := c.Read(data)
 		if err != nil {
 
 			lib.Log("Fail Stream read, err : ", err)
 			break
 		}
 
-		// header - body format (header + body in single line)
-		messageType := gs_protocol.Type(lib.ReadInt32(data[0:4]))
-
-		lib.Log("Decoding type : ", messageType)
-
-		rawData := data[4:n] // 4~ end of line <--if fail read rawData, need calculated body size data (field)
-		handler, ok := msgHandler[messageType]
-
-		if ok {
-			handler(user, rawData) // calling proper handler function
+		message := &gs_protocol.Message{}
+		err = proto.Unmarshal(data, message)
+		if err != nil {
+			//lib.Log("fail proto.Unmarshal(data, message)")
+			//lib.CheckError(err)
 		} else {
-
-			lib.Log("Fail no function defined for type", messageType)
-
-			break
+			//lib.Log("success proto.Unmarshal(data, message)", message)
 		}
+
+		messageHandler(user, message)
 	}
 
 	// fail read
-	user.exit <- struct{}{}
+	user.exit <- true
 }
 
 func onConnect(c net.Conn) {
-	if DEBUG {
-		lib.Log("New connection: ", c.RemoteAddr())
-	}
+
+	lib.Log("New connection: ", c.RemoteAddr())
 
 	user := NewUser(0, nil) // empty user data
 
@@ -126,9 +114,7 @@ func main() {
 	ln, err := net.Listen("tcp", ":8000") // using TCP protocol over 8000 port
 	defer ln.Close()                      // reserve listen wait close
 	if err != nil {
-		if DEBUG {
-			lib.Log(err)
-		}
+		lib.Log(err)
 		return
 	}
 

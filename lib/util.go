@@ -3,14 +3,51 @@ package lib
 import (
 	"encoding/binary"
 	"fmt"
-	"github.com/ohsaean/gogpd/protobuf"
 	"math/rand"
 	"os"
 	"strconv"
+	"time"
 )
+
+func GetNow() time.Time {
+	t := time.Now()
+	return t
+}
+
+func GetDateTime() time.Time {
+	t := GetNow()
+	t.Format("2016-01-01 23:59:59")
+	return t
+}
+
+func Atoi64(s string) int64 {
+	integer, err := strconv.Atoi(s)
+	CheckError(err)
+	return int64(integer)
+}
+
+func Atoi32(s string) int32 {
+	integer, err := strconv.Atoi(s)
+	CheckError(err)
+	return int32(integer)
+}
+
+func Atoi(s string) int {
+	integer, err := strconv.Atoi(s)
+	CheckError(err)
+	return integer
+}
 
 func Itoa64(i int64) string {
 	return strconv.FormatInt(i, 10)
+}
+
+func Itoa32(i int32) string {
+	return strconv.Itoa(int(i))
+}
+
+func Itoa(i int) string {
+	return strconv.Itoa(i)
 }
 
 func Log(a ...interface{}) {
@@ -37,11 +74,6 @@ func ReadInt32(data []byte) (ret int32) {
 func WriteInt32(n int32) (buf []byte) {
 	buf = make([]byte, 4)
 	binary.BigEndian.PutUint32(buf, uint32(n)) // fastest convert method, do not use "binary.Write"
-	return
-}
-
-func WriteMsgType(n gs_protocol.Type) (buf []byte) {
-	buf = WriteInt32(int32(n))
 	return
 }
 

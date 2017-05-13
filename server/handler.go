@@ -6,88 +6,116 @@ import (
 	"github.com/ohsaean/gogpd/protobuf"
 )
 
-type MsgHandlerFunc func(user *User, data []byte)
+// MessageHandler 여기서 각 proto message 에 대한 적절한 프로시저를 할당함
+func messageHandler(user *User, msg *gs_protocol.Message) {
+	// type switch 말고는 방법이 없나??
+	switch msg.Payload.(type) {
 
-var msgHandler = map[gs_protocol.Type]MsgHandlerFunc{
-	gs_protocol.Type_Login:          LoginHandler,
-	gs_protocol.Type_Create:         CreateHandler,
-	gs_protocol.Type_Join:           JoinHandler,
-	gs_protocol.Type_DefinedAction1: Action1Handler,
-	gs_protocol.Type_Quit:           QuitHandler,
-	gs_protocol.Type_RoomList:       RoomListHandler,
+	case *gs_protocol.Message_ReqLogin:
+		loginHandler(user, msg)
+
+	case *gs_protocol.Message_ReqCreate:
+		createHandler(user, msg)
+
+	case *gs_protocol.Message_ReqJoin:
+		joinHandler(user, msg)
+
+	case *gs_protocol.Message_ReqAction1:
+		action1Handler(user, msg)
+
+	case *gs_protocol.Message_ReqRoomList:
+		roomListHandler(user, msg)
+
+	case *gs_protocol.Message_ReqQuit:
+		quitHandler(user, msg)
+
+	default:
+		lib.Log("Error, not defined handler")
+	}
 }
 
-func LoginHandler(user *User, data []byte) {
+func loginHandler(user *User, data *gs_protocol.Message) {
 
-	// request body unmarshaling
-	req := new(gs_protocol.ReqLogin)
-	err := proto.Unmarshal(data, req)
-	lib.CheckError(err)
-	user.userID = req.GetUserID()
+	req := data.GetReqLogin()
+	if req == nil {
+		lib.Log("fail, GetReqLogin()")
+	} else {
+		lib.Log("GetReqLogin() : ", req)
+	}
+	user.userID = req.UserID
 
 	// TODO validation logic here
 
 	// response body marshaling
-	res := new(gs_protocol.ResLogin)
-	res.Result = proto.Int32(1)
-	res.UserID = proto.Int64(user.userID)
+	res := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ResLogin{
+			ResLogin: &gs_protocol.ResLogin{
+				UserID: user.userID,
+			},
+		},
+	}
 
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
-	user.recv <- NewMessage(user.userID, gs_protocol.Type_Login, msg)
+	user.recv <- NewMessage(user.userID, msg)
 }
 
-func CreateHandler(user *User, data []byte) {
+func createHandler(user *User, data *gs_protocol.Message) {
 
-	// request body unmarshaling
-	req := new(gs_protocol.ReqCreate)
-	err := proto.Unmarshal(data, req)
-	lib.CheckError(err)
+	req := data.GetReqCreate()
+	if req == nil {
+		lib.Log("fail, GetReqCreate()")
+	}
 
-	if user.userID != req.GetUserID() {
-		if DEBUG {
-			lib.Log("Fail room create, user id missmatch")
-		}
+	lib.Log("GetReqCreate() : ", req)
+
+	if user.userID != req.UserID {
+		lib.Log("Fail room create, user id missmatch")
 		return
 	}
 
 	// room create
-	roomID := GetRandomRoomID()
+	roomID := GetAutoIncRoomID()
 	r := NewRoom(roomID)
 	r.users.Set(user.userID, user) // insert user
 	user.room = r                  // set room
-	rooms.Set(roomID, r)           // set room into global shared map
-	if DEBUG {
-		lib.Log("Get rand room id : ", lib.Itoa64(roomID))
-	}
-	// response body marshaling
-	res := new(gs_protocol.ResCreate)
-	res.RoomID = proto.Int64(roomID)
-	res.UserID = proto.Int64(user.userID)
+	lib.Log("user ", user)
+	rooms.Set(roomID, r) // set room into global shared map
+	lib.Log("Get rand room id : ", lib.Itoa64(roomID))
 
-	if DEBUG {
-		lib.Log("Room create, room id : ", lib.Itoa64(roomID))
+	// response body marshaling
+	res := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ResCreate{
+			ResCreate: &gs_protocol.ResCreate{
+				RoomID: roomID,
+				UserID: user.userID,
+			},
+		},
 	}
+
+	lib.Log("Room create, room id : ", lib.Itoa64(roomID))
+
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
-	user.Push(NewMessage(user.userID, gs_protocol.Type_Create, msg))
+	user.Push(NewMessage(user.userID, msg))
 }
 
-func JoinHandler(user *User, data []byte) {
+func joinHandler(user *User, data *gs_protocol.Message) {
 
 	// request body unmarshaling
-	req := new(gs_protocol.ReqJoin)
-	err := proto.Unmarshal(data, req)
-	lib.CheckError(err)
+	req := data.GetReqJoin()
+	if req == nil {
+		lib.Log("fail, GetReqJoin()")
+	}
 
-	roomID := req.GetRoomID()
+	roomID := req.RoomID
 
 	value, ok := rooms.Get(roomID)
 
 	if !ok {
-		if DEBUG {
-			lib.Log("Fail room join, room does not exist, room id : ", lib.Itoa64(roomID))
-		}
+
+		lib.Log("Fail room join, room does not exist, room id : ", lib.Itoa64(roomID))
+
 		return
 	}
 
@@ -96,80 +124,116 @@ func JoinHandler(user *User, data []byte) {
 	user.room = r
 
 	// broadcast message
-	notifyMsg := new(gs_protocol.NotifyJoinMsg)
-	notifyMsg.UserID = proto.Int64(user.userID)
-	notifyMsg.RoomID = proto.Int64(roomID)
+	notifyMsg := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ReqJoin{
+			ReqJoin: &gs_protocol.ReqJoin{
+				UserID: 1,
+				RoomID: roomID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(notifyMsg)
 	lib.CheckError(err)
 
-	user.SendToAll(NewMessage(user.userID, gs_protocol.Type_NotifyJoin, msg))
+	user.SendToAll(NewMessage(user.userID, msg))
 
 	// response body marshaling
-	res := new(gs_protocol.ResJoin)
-	res.UserID = proto.Int64(user.userID)
-	res.RoomID = proto.Int64(roomID)
-	res.Members = r.getRoomUsers()
-
-	msg, err = proto.Marshal(res)
-	lib.CheckError(err)
-	user.Push(NewMessage(user.userID, gs_protocol.Type_Join, msg))
-}
-
-func Action1Handler(user *User, data []byte) {
-
-	// request body unmarshaling
-	req := new(gs_protocol.ReqAction1)
-	err := proto.Unmarshal(data, req)
-	lib.CheckError(err)
-
-	// TODO create business logic for Action1 Type
-	if DEBUG {
-		lib.Log("Action1 userID : ", lib.Itoa64(req.GetUserID()))
+	res := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ResJoin{
+			ResJoin: &gs_protocol.ResJoin{
+				RoomID: roomID,
+				UserID: user.userID,
+			},
+		},
 	}
 
+	msg, err = proto.Marshal(res)
+	lib.CheckError(err)
+	user.Push(NewMessage(user.userID, msg))
+}
+
+func action1Handler(user *User, data *gs_protocol.Message) {
+
+	// request body unmarshaling
+	req := data.GetReqAction1()
+	if req == nil {
+		lib.Log("fail, GetReqAction1()")
+	}
+
+	// TODO create business logic for Action1 Type
+
+	lib.Log("Action1 userID : ", lib.Itoa64(req.UserID))
+
 	// broadcast message
-	notifyMsg := new(gs_protocol.NotifyAction1Msg)
-	notifyMsg.UserID = proto.Int64(user.userID)
+	notifyMsg := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_NotifyAction1{
+			NotifyAction1: &gs_protocol.NotifyAction1Msg{
+				UserID: user.userID,
+			},
+		},
+	}
 	msg, err := proto.Marshal(notifyMsg)
 	lib.CheckError(err)
 
-	user.SendToAll(NewMessage(user.userID, gs_protocol.Type_NotifyAction1, msg))
+	user.SendToAll(NewMessage(user.userID, msg))
 
 	// response body marshaling
-	res := new(gs_protocol.ResAction1)
-	res.UserID = proto.Int64(user.userID)
-	res.Result = proto.Int32(1) // is success?
+	res := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ResAction1{
+			ResAction1: &gs_protocol.ResAction1{
+				UserID: user.userID,
+			},
+		},
+	}
+
 	msg, err = proto.Marshal(res)
 	lib.CheckError(err)
-	user.Push(NewMessage(user.userID, gs_protocol.Type_DefinedAction1, msg))
+	user.Push(NewMessage(user.userID, msg))
 }
 
-func QuitHandler(user *User, data []byte) {
+func quitHandler(user *User, data *gs_protocol.Message) {
 
 	// request body unmarshaling
-	req := new(gs_protocol.ReqQuit)
-	err := proto.Unmarshal(data, req)
-	lib.CheckError(err)
+	req := data.GetReqQuit()
+	if req == nil {
+		lib.Log("fail, GetReqQuit()")
+	}
 
-	res := new(gs_protocol.ResQuit)
-	res.IsSuccess = proto.Int32(1) // is success?
+	// response body marshaling
+	res := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ResQuit{
+			ResQuit: &gs_protocol.ResQuit{
+				UserID:    user.userID,
+				IsSuccess: 1,
+			},
+		},
+	}
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
-	user.Push(NewMessage(user.userID, gs_protocol.Type_Quit, msg))
+	user.Push(NewMessage(user.userID, msg))
 
 	// same act user.Leave()
-	user.exit <- struct{}{}
+	user.exit <- true
 }
 
-func RoomListHandler(user *User, data []byte) {
+func roomListHandler(user *User, data *gs_protocol.Message) {
 	// request body unmarshaling
-	req := new(gs_protocol.ReqRoomList)
-	err := proto.Unmarshal(data, req)
-	lib.CheckError(err)
+	req := data.GetReqRoomList()
+	if req == nil {
+		lib.Log("fail, GetReqQuit()")
+	}
+	lib.Log("GetReqRoomList() : ", req)
 
-	res := new(gs_protocol.ResRoomList)
-	res.RoomIDs = rooms.GetKeys()
+	// response body marshaling
+	res := &gs_protocol.Message{
+		Payload: &gs_protocol.Message_ResRoomList{
+			ResRoomList: &gs_protocol.ResRoomList{
+				UserID:  user.userID,
+				RoomIDs: rooms.GetKeys(),
+			},
+		},
+	}
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
-	user.Push(NewMessage(user.userID, gs_protocol.Type_RoomList, msg))
+	user.Push(NewMessage(user.userID, msg))
 }
