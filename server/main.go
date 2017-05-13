@@ -18,17 +18,18 @@ const (
 
 // global variable
 var (
-	rooms lib.SharedMap
+	rooms   lib.SharedMap
+	gRoomID int64
 )
 
-type Message struct {
+type UserMessage struct {
 	userID    int64  // sender
 	timestamp int    // send time
 	contents  []byte // serialized google protocol-buffer message
 }
 
-func NewMessage(userID int64, msg []byte) *Message {
-	return &Message{
+func NewMessage(userID int64, msg []byte) *UserMessage {
+	return &UserMessage{
 		userID,
 		int(time.Now().Unix()),
 		msg,
@@ -71,7 +72,7 @@ func onClientRead(user *User, c net.Conn) {
 
 	data := make([]byte, 4096) // 4096 byte slice (dynamic resize)
 
-	c.SetReadDeadline(time.Now().Add(30 * time.Second))
+	//c.SetReadDeadline(time.Now().Add(30 * time.Second))
 	defer c.Close() // reserve tcp connection close
 	for {
 		_, err := c.Read(data)
@@ -84,14 +85,17 @@ func onClientRead(user *User, c net.Conn) {
 		message := &gs_protocol.Message{}
 		err = proto.Unmarshal(data, message)
 		if err != nil {
-			lib.CheckError(err)
+			//lib.Log("fail proto.Unmarshal(data, message)")
+			//lib.CheckError(err)
+		} else {
+			//lib.Log("success proto.Unmarshal(data, message)", message)
 		}
 
 		messageHandler(user, message)
 	}
 
 	// fail read
-	user.exit <- struct{}{}
+	user.exit <- true
 }
 
 func onConnect(c net.Conn) {

@@ -200,6 +200,8 @@ func ResLogin(data *gs_protocol.Message) bool {
 	if res == nil {
 		lib.Log("fail, GetReqLogin()")
 		return false
+	} else {
+		lib.Log("GetReqLogin() : ", res)
 	}
 
 	log.Println("ResLogin server return : user id : " + lib.Itoa64(res.UserID))
@@ -230,14 +232,14 @@ func ResRoomList(data *gs_protocol.Message) bool {
 
 	res := data.GetResRoomList()
 	if res == nil {
-		lib.Log("fail, GetReqLogin()")
+		lib.Log("fail, GetResRoomList()")
 		return false
 	}
 
-	log.Println("ResLogin server return : user id : ", res.UserID)
+	log.Println("GetResRoomList server return : user id : ", res.UserID)
 
 	for _, roomID := range res.RoomIDs {
-		log.Println("ResLogin server return : room id : ", roomID)
+		log.Println("GetResRoomList server return : room id : ", roomID)
 	}
 
 	return true

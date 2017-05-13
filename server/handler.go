@@ -39,6 +39,8 @@ func loginHandler(user *User, data *gs_protocol.Message) {
 	req := data.GetReqLogin()
 	if req == nil {
 		lib.Log("fail, GetReqLogin()")
+	} else {
+		lib.Log("GetReqLogin() : ", req)
 	}
 	user.userID = req.UserID
 
@@ -46,8 +48,8 @@ func loginHandler(user *User, data *gs_protocol.Message) {
 
 	// response body marshaling
 	res := &gs_protocol.Message{
-		Payload: &gs_protocol.Message_ReqLogin{
-			ReqLogin: &gs_protocol.ReqLogin{
+		Payload: &gs_protocol.Message_ResLogin{
+			ResLogin: &gs_protocol.ResLogin{
 				UserID: user.userID,
 			},
 		},
@@ -65,18 +67,21 @@ func createHandler(user *User, data *gs_protocol.Message) {
 		lib.Log("fail, GetReqCreate()")
 	}
 
+	lib.Log("GetReqCreate() : ", req)
+
 	if user.userID != req.UserID {
 		lib.Log("Fail room create, user id missmatch")
 		return
 	}
 
 	// room create
-	roomID := GetRandomRoomID()
+	roomID := GetAutoIncRoomID()
 	r := NewRoom(roomID)
 	r.users.Set(user.userID, user) // insert user
 	user.room = r                  // set room
-	rooms.Set(roomID, r)           // set room into global shared map
-		lib.Log("Get rand room id : ", lib.Itoa64(roomID))
+	lib.Log("user ", user)
+	rooms.Set(roomID, r) // set room into global shared map
+	lib.Log("Get rand room id : ", lib.Itoa64(roomID))
 
 	// response body marshaling
 	res := &gs_protocol.Message{
@@ -88,8 +93,7 @@ func createHandler(user *User, data *gs_protocol.Message) {
 		},
 	}
 
-
-		lib.Log("Room create, room id : ", lib.Itoa64(roomID))
+	lib.Log("Room create, room id : ", lib.Itoa64(roomID))
 
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
@@ -110,7 +114,7 @@ func joinHandler(user *User, data *gs_protocol.Message) {
 
 	if !ok {
 
-			lib.Log("Fail room join, room does not exist, room id : ", lib.Itoa64(roomID))
+		lib.Log("Fail room join, room does not exist, room id : ", lib.Itoa64(roomID))
 
 		return
 	}
@@ -209,7 +213,7 @@ func quitHandler(user *User, data *gs_protocol.Message) {
 	user.Push(NewMessage(user.userID, msg))
 
 	// same act user.Leave()
-	user.exit <- struct{}{}
+	user.exit <- true
 }
 
 func roomListHandler(user *User, data *gs_protocol.Message) {
@@ -218,6 +222,7 @@ func roomListHandler(user *User, data *gs_protocol.Message) {
 	if req == nil {
 		lib.Log("fail, GetReqQuit()")
 	}
+	lib.Log("GetReqRoomList() : ", req)
 
 	// response body marshaling
 	res := &gs_protocol.Message{
@@ -230,6 +235,5 @@ func roomListHandler(user *User, data *gs_protocol.Message) {
 	}
 	msg, err := proto.Marshal(res)
 	lib.CheckError(err)
-	user.Push(NewMessage(user.userID, msg))
 	user.Push(NewMessage(user.userID, msg))
 }

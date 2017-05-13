@@ -9,15 +9,15 @@ import (
 type User struct {
 	userID int64
 	room   *Room
-	recv   chan *Message
-	exit   chan struct{} // signal
+	recv   chan *UserMessage
+	exit   chan bool // signal
 }
 
 func NewUser(uid int64, room *Room) *User {
 	return &User{
 		userID: uid,
-		recv:   make(chan *Message),
-		exit:   make(chan struct{}),
+		recv:   make(chan *UserMessage),
+		exit:   make(chan bool, 1),
 		room:   room,
 	}
 }
@@ -51,11 +51,11 @@ func (u *User) Leave() {
 	lib.Log("Leave func end")
 }
 
-func (u *User) Push(m *Message) {
+func (u *User) Push(m *UserMessage) {
 	u.recv <- m // send message to user
 }
 
-func (u *User) SendToAll(m *Message) {
+func (u *User) SendToAll(m *UserMessage) {
 	if u.room.IsEmptyRoom() == false {
 		u.room.messages <- m
 	}
