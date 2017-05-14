@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
 	"strconv"
 	"time"
@@ -92,4 +93,15 @@ func Int64SliceToString(set []int64) (str string) {
 	}
 	str += "]"
 	return str
+}
+
+func WriteMsg(c net.Conn, contents []byte) bool {
+	size := WriteInt32(int32(len(contents)))
+	msg := append(size, contents...)
+	_, err := c.Write(msg) // send data to client
+	if err != nil {
+		Log(err)
+		return false
+	}
+	return true
 }

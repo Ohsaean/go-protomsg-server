@@ -121,14 +121,26 @@ func main() {
 
 		for {
 			log.Println("wait for read")
-			_, err := client.Read(data)
+			n, err := client.Read(data)
 			if err != nil {
 				log.Println("Fail Stream read, err : ", err)
 				break
 			}
 
+			msgSize := lib.ReadInt32(data[0:4])
+			log.Println("Decoding length : ", msgSize)
+
+			totalSize := 4 + int(msgSize)
+
+			if n < totalSize {
+				log.Println("packet loss", msgSize)
+				continue
+			}
+
+			body := data[4:]
+
 			message := &gs_protocol.Message{}
-			err = proto.Unmarshal(data, message)
+			err = proto.Unmarshal(body, message)
 			if err != nil {
 				lib.CheckError(err)
 			}
@@ -186,12 +198,10 @@ func ReqLogin(c net.Conn, userUID int64, data []byte) {
 	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Print(err)
+	ret := lib.WriteMsg(c, msg)
+	if ret == false {
 		return
 	}
-
 	log.Println("ReqLogin client send :", req)
 }
 
@@ -219,12 +229,10 @@ func ReqRoomList(c net.Conn, userUID int64, data []byte) {
 	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Print(err)
+	ret := lib.WriteMsg(c, msg)
+	if ret == false {
 		return
 	}
-
 	log.Println("ReqRoomList client send :", req)
 }
 
@@ -255,9 +263,8 @@ func ReqCreate(c net.Conn, userUID int64, data []byte) {
 	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Print(err)
+	ret := lib.WriteMsg(c, msg)
+	if ret == false {
 		return
 	}
 
@@ -289,12 +296,10 @@ func ReqJoin(c net.Conn, userUID int64, data []byte, roomID int64) {
 	}
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Print(err)
+	ret := lib.WriteMsg(c, msg)
+	if ret == false {
 		return
 	}
-
 	log.Println("ReqJoin client send :", req)
 }
 
@@ -327,9 +332,8 @@ func ReqAction1(c net.Conn, userUID int64, data []byte) {
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
 
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Print(err)
+	ret := lib.WriteMsg(c, msg)
+	if ret == false {
 		return
 	}
 
@@ -361,9 +365,8 @@ func ReqQuit(c net.Conn, userUID int64, data []byte) {
 	msg, err := proto.Marshal(req)
 	lib.CheckError(err)
 
-	_, err = c.Write(msg)
-	if err != nil {
-		log.Print(err)
+	ret := lib.WriteMsg(c, msg)
+	if ret == false {
 		return
 	}
 
