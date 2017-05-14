@@ -55,14 +55,9 @@ func onClientWrite(user *User, c net.Conn) {
 			return
 		case m := <-user.recv:
 
-			lib.Log("Client recv, user id : " + lib.Itoa64(user.userID))
-
-			_, err := c.Write(m.contents) // send data to client
-			if err != nil {
-
-				lib.Log(err)
-
-				return
+			ret := lib.WriteMsg(c, m.contents)
+			if ret == false {
+				break
 			}
 		}
 	}
@@ -75,15 +70,26 @@ func onClientRead(user *User, c net.Conn) {
 	//c.SetReadDeadline(time.Now().Add(30 * time.Second))
 	defer c.Close() // reserve tcp connection close
 	for {
-		_, err := c.Read(data)
+		n, err := c.Read(data)
 		if err != nil {
-
 			lib.Log("Fail Stream read, err : ", err)
 			break
 		}
 
+		msgSize := lib.ReadInt32(data[0:4])
+		lib.Log("Decoding length : ", msgSize)
+
+		totalSize := 4 + int(msgSize)
+
+		if n < totalSize {
+			lib.Log("packet loss", msgSize)
+			continue
+		}
+
+		body := data[4:]
+
 		message := &gs_protocol.Message{}
-		err = proto.Unmarshal(data, message)
+		err = proto.Unmarshal(body, message)
 		if err != nil {
 			//lib.Log("fail proto.Unmarshal(data, message)")
 			//lib.CheckError(err)
